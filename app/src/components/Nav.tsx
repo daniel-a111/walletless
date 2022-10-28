@@ -9,6 +9,23 @@ import { formatAddress, formatBalance, formatDate } from "../utils";
 const Nav = () => {
 
     const [mount] = useState<boolean>(true);
+    async function onClickConnectMetaMask() {
+        const { ethereum }: any = window;
+        try {
+            if (!ethereum) {
+                window.open('https://metamask.io/', '_blank');
+                return;
+            }
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            connected(accounts);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    const connected = (accounts: any) => {
+        console.log(accounts);
+    }
+
     // const [safes, setSafes] = useState<any[]>([]);
     // const [network, setNetwork] = useState<Network>();
     // const [token, setToken] = useState<Token>();
@@ -44,7 +61,7 @@ const Nav = () => {
     return <div className="nav">
         <div className="content">
             <div className="timelock-logo">WalletLess</div>
-            <a className="btn-launch-app">Launch App</a>
+            <a className="btn-launch-app" onClick={onClickConnectMetaMask}>Launch App</a>
             <a>Donate</a>
             <a>About</a>
             <a>Learn</a>
