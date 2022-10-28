@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = 'http://localhost:8001/api'
+import config from "../config";
+
+const API_BASE_URL = `${config.API_BASE_URL}/api`
 
 export const signup = async (): Promise<string> => {
     const res = await axios.post(`${API_BASE_URL}/signup`);
