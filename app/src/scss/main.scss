@@ -1,0 +1,117 @@
+
+.app-window {
+    width: 800px;
+    margin: 0px auto;
+}
+
+.wallet-section {
+    background: #dadada;
+    height: 200px;
+    padding: 14px 10px;
+    border-radius: 16px;
+    border: solid 3px;
+    margin-top: 18px;
+}
+
+.take-action-box {
+    margin-top: 100px;
+}
+
+
+.account-menu-item {
+    cursor: pointer;
+    display: inline-block;
+    width: 228px;
+    background: #dadada;
+    margin: -17px 4px 40px;
+    height: 32px;
+    line-height: 32px;
+    font-size: 18px;
+    font-weight: 400;
+    &:hover {
+        background: #a3d1a6;
+    }
+}
+
+
+.main-menu-item {
+    cursor: pointer;
+    display: inline-block;
+    width: 380px;
+    background: #dadada;
+    margin: 4px 4px;
+    height: 68px;
+    line-height: 69px;
+    font-size: 18px;
+    font-weight: 400;
+
+    &:hover {
+        background: #a3d1a6;
+    }
+}
+
+.gateway {
+    float: left;
+    width: 200px;
+    background: rgb(218, 218, 218);
+    padding: 36px 0px;
+    margin-right: 10px;
+    margin-top: 10px;
+
+    &:hover {
+        background: rgb(154 180 162);
+    }
+}
+
+.gateway-future {
+    margin-top: 10px;
+    float: left;
+    width: 400px;
+    background: rgb(218, 218, 218);
+    padding: 16px 0px;
+    margin-right: 10px;
+
+    &:hover {
+        background: rgb(154 180 162);
+    }
+}
+
+.gateway-control .gateway-name {
+
+    .edit-btn {
+        display: none;
+    }
+
+    &:hover {
+        .edit-btn {
+            display: block;
+        }
+    }
+}
+
+
+@media only screen and (max-width: 600px) {
+    .app-window {
+        width: 100%;
+        margin: auto;
+        padding: 0 32px;
+        box-sizing: border-box;
+    }
+    .page-content {
+        min-height: auto;
+    }
+    .nav .content {
+        width: 100%;
+
+        a {
+            display: none;
+        }
+        a.btn-launch-app {
+            display: inline-block;
+            margin-right: 10px;
+        }
+    }
+    .main-menu-item {
+        width: 90%;
+    }
+}
