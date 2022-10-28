@@ -19,8 +19,8 @@ if (ethereum) {
     signer = provider?.getSigner();
 }
 
-export const topup = async (amount: number) => {
-    let contract = new ethers.Contract(accountAddress||'', NO_WALLET_ABI, signer);
+export const topup = async (address: string, amount: number) => {
+    let contract = new ethers.Contract(address||'', NO_WALLET_ABI, signer);
     let amountStr = amount.toString();
     if (amountStr.indexOf('.')<0) {
         amountStr += '.';

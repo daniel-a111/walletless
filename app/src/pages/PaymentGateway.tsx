@@ -12,7 +12,7 @@ const PaymentGateway = () => {
     
     const topupRef = createRef<HTMLInputElement>();
     const onClickTopup = async () => {
-        await topup(parseFloat(topupRef.current?.value||'0.'));
+        await topup(address, parseFloat(topupRef.current?.value||'0.'));
     }
 
     return <>

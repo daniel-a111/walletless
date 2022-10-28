@@ -43,7 +43,7 @@ const Home = () => {
 
     const [paymentGateway, setPaymentGateway] = useState<string>();
     const onClickCreatePaymentGateway = async () => {
-        setPaymentGateway(`http://localhost:3000/#/app/gateway?address=${accountAddress}&amount=${topupRef.current?.value||'0.0'}`);
+        setPaymentGateway(`${process.env.PUBLIC_URL}/#/app/gateway?address=${accountAddress}&amount=${topupRef.current?.value||'0.0'}`);
     }
 
     const ACTION_PAYMENT_GATEWAY = 1;
