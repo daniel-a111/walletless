@@ -27,7 +27,24 @@ const initAccount = async (req: Request, res: Response, next: NextFunction) => {
     const wallet = await loadWallet(address);    
     const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
     const RGFProvider = await ManualRGFProvider.deploy(wallet.address, RGF, RGFM, MIN_RGF);
+
+    let walletAddress = address;
+
+    let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress } })
+    if (!feesAccount) {
+        let addressData = ethWallet.generate();
+        console.log(`Private key = , ${addressData.getPrivateKeyString()}`);
+        console.log(`Address = , ${addressData.getAddressString()}`);
+        feesAccount = FeesAccount.build({
+            address: addressData.getAddressString(),
+            PK: addressData.getPrivateKeyString(),
+            walletAddress
+        });
+        await feesAccount.save()
+    }
+
     await wallet.init( '0x'+cert, nonceSize, RGFProvider.address);
+
     return res.status(200).json({ account: await loadAccount(wallet.address) })
 }
 
@@ -47,6 +64,9 @@ const loadAccount = async (address: string) => {
 
     // let feesAccount = FeesAccount.build({ address: addressData.getAddressString(), PK: addressData.getPrivateKeyString() });
     // await feesAccount.save();
+    let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } })
+
+    let feesAccountAddress = feesAccount?.address||FEES_ACCOUNT;
 
     let isActive = await wallet.active();
     let account: any = {
@@ -55,8 +75,8 @@ const loadAccount = async (address: string) => {
         nonce: parseInt(ethers.utils.formatUnits(await wallet.nonce(), 0)),
         nonceSize: parseInt(ethers.utils.formatUnits(await wallet.nonceSize(), 0)),
         balance: ethers.utils.formatEther(await owner.provider?.getBalance(address)||'0'),
-        feesAccount: FEES_ACCOUNT,
-        gasFeesBalance: ethers.utils.formatEther(await owner.provider?.getBalance(FEES_ACCOUNT)||'0'),
+        feesAccount: feesAccount?.address||FEES_ACCOUNT,
+        gasFeesBalance: ethers.utils.formatEther(await owner.provider?.getBalance(feesAccountAddress)||'0'),
     }
 
     try {
