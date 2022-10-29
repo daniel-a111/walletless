@@ -82,6 +82,31 @@ describe("No-Wallet Account", async () => {
     console.log({ balance: ethers.utils.formatEther(await wallet.provider.getBalance(wallet.address)) })
   });
 
+  it("Topup wallet-less", async function () {
+    const [owner, addr1, addr2, addr3] = await ethers.getSigners();
+
+    let { wallet, cert, nonceSize } = await loadFixture(deployOneMinuteDelayVault);
+    let { wallet: wallet2 } = await deployOneMinuteDelayVault();
+
+    console.log({ wallet: wallet.address });
+    console.log({ wallet2: wallet2.address });
+    let to = wallet2.address;
+    let value = ethers.utils.parseEther("8.");
+    const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
+    const iface = TwoFactorWallet.interface;
+    let data = iface.encodeFunctionData("topup", []);
+
+    let proof = passwordsAndAddressAndCertAndNonceToProof(PASSWORD, wallet.address, cert, await wallet.nonce(), nonceSize);
+    let {txCert} = signTransactionAndProof({ to, data, value }, proof||'');
+
+    const gweiValue = MIN_RGF;
+    await wallet.call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
+    await wallet.expose(proof, 0);
+
+    // console.log({ balance: ethers.utils.formatEther(await owner.getBalance()) })
+    console.log({ balance: ethers.utils.formatEther(await wallet2.provider.getBalance(wallet2.address)) })
+    console.log({ balance: ethers.utils.formatEther(await wallet.provider.getBalance(wallet.address)) })
+  });
 
   it("First is the taker", async function () {
     const [owner, addr1, addr2, addr3] = await ethers.getSigners();

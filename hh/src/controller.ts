@@ -128,16 +128,10 @@ const transact = async (req: Request, res: Response, next: NextFunction) => {
     const gweiValue = MIN_RGF;
     if (to) {
         let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-        if (data && data.startsWith('0x')) {
-            data = data.substring(2);
-        }
-        console.log({ to, value, data, txCert })
-    
-        data = ethers.utils.toUtf8CodePoints(data);
         let recordTr = await wallet.call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
         console.log({ recordTr })    
     }
-    let tr = await wallet.expose('0x'+proof, 0);
+    let tr = await wallet.expose('0x'+proof, 0, { gasLimit: 500_000});
     console.log({ tr });
 
     return res.status(200).json({ account: await loadAccount(address) })
