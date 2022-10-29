@@ -2,6 +2,7 @@ import { createRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 import { getAccountAddress, getBalance, getGasFeesBalance, testPassword, transact } from "../account/Account";
+import { topupData } from "../contracts";
 
 const Home = () => {
     let navigate = useNavigate();
@@ -31,10 +32,15 @@ const Home = () => {
     const [amount, setAmount] = useState<string>('0');
     const [data, setData] = useState<string>('');
 
-    const onClickSubmit = () => {
+    const onClickSubmit = async () => {
         setTo(toRef.current?.value||'');
         setAmount(amountRef.current?.value||'0.');
-        setData(dataRef.current?.value||'');
+        if (isToWalletLes) {
+            console.log({ isToWalletLes, data: await topupData(toRef.current?.value||'') })
+            setData( await topupData(toRef.current?.value||''));
+        } else {
+            setData(dataRef.current?.value||'');
+        }
         setAuth(true);
     }
 
@@ -56,6 +62,8 @@ const Home = () => {
 
     const [isToContract, setToContract] = useState<boolean>(false);
     const isToContractRef = createRef<HTMLInputElement>();
+    const [isToWalletLes, setToWalletless] = useState<boolean>(false);
+    const isToWalletLesRef = createRef<HTMLInputElement>();
 
     const [subAction, setSubAction] = useState<number|null>();
     const SUB_ACTION_TEST_PASSWORD = 4;
@@ -118,6 +126,8 @@ const Home = () => {
                                         <>
                                             To <input type={'text'} ref={toRef} /><br />
                                             Amount <input type={'number'} ref={amountRef} /><br />
+                                            is wallet-less? <input ref={isToWalletLesRef} onChange={
+                                                () => setToWalletless(!!(isToWalletLesRef?.current?.checked)) } type={'checkbox'} /><br />
                                             with data? <input ref={isToContractRef} onChange={
                                                 () => setToContract(!!(isToContractRef?.current?.checked)) } type={'checkbox'} /><br />
                                             {
