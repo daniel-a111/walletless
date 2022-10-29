@@ -120,7 +120,8 @@
   min-height: 1000px;
   margin: 0 auto;
   overflow-y: scroll;
-  height: 590px;
+  height: 700px;
+  box-sizing: border-box;
 }
 .safes-container {
   float: right;

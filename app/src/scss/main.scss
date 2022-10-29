@@ -1,3 +1,7 @@
+body {
+    height: 100%;
+    overflow: hidden;
+}
 
 .app-window {
     width: 800px;
@@ -99,6 +103,7 @@
     }
     .page-content {
         min-height: auto;
+        padding-bottom: 100px;
     }
     .nav .content {
         width: 100%;

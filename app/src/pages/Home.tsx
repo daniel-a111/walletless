@@ -35,8 +35,7 @@ const Home = () => {
     const onClickSubmit = async () => {
         setTo(toRef.current?.value||'');
         setAmount(amountRef.current?.value||'0.');
-        if (isToWalletLes) {
-            console.log({ isToWalletLes, data: await topupData(toRef.current?.value||'') })
+        if (isToWalletLess) {
             setData( await topupData(toRef.current?.value||''));
         } else {
             setData(dataRef.current?.value||'');
@@ -62,7 +61,7 @@ const Home = () => {
 
     const [isToContract, setToContract] = useState<boolean>(false);
     const isToContractRef = createRef<HTMLInputElement>();
-    const [isToWalletLes, setToWalletless] = useState<boolean>(false);
+    const [isToWalletLess, setToWalletless] = useState<boolean>(false);
     const isToWalletLesRef = createRef<HTMLInputElement>();
 
     const [subAction, setSubAction] = useState<number|null>();
