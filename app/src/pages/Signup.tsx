@@ -7,7 +7,7 @@ const Signup = () => {
 
     const passRef = createRef<HTMLInputElement>();
     const rePassRef = createRef<HTMLInputElement>();
-    const [accountAddress] = useState<string|undefined>(getAccountAddress());
+    const [accountAddress, setAccountAddress] = useState<string|undefined>(getAccountAddress());
 
     const STEP_PASS = 'STEP_PASS';
     const STEP_PASS_RE = 'STEP_PASS_RE';
@@ -27,6 +27,7 @@ const Signup = () => {
         if (pass === rePassRef.current?.value) {
             let newAccount = await signup(pass||'');
             console.log({newAccount});
+            setAccountAddress(newAccount);
             setStep(STEP_DONE);
         }
     }

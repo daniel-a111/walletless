@@ -6,7 +6,7 @@ import { formatAddress } from "../utils";
 
 const Signin = () => {
 
-    const [accountAddress] = useState<string|undefined>(getAccountAddress());
+    const [accountAddress, setAccountAddress] = useState<string|undefined>(getAccountAddress());
 
     const addressRef = createRef<HTMLInputElement>();
     const passRef = createRef<HTMLInputElement>();
@@ -29,6 +29,7 @@ const Signin = () => {
             let pass = passRef.current?.value||'';
             let isLoggedIn = await signin(address, pass);
             if (isLoggedIn) {
+                setAccountAddress(address);
                 storeAccountAddress(address);
                 setStep(STEP_3_DONE);
             } else {
