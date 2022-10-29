@@ -94,9 +94,14 @@ const loadAccount = async (address: string) => {
 
 const getAccount = async (req: Request, res: Response, next: NextFunction) => {
     let { address }: any = req.query;
-    const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
-    const wallet = await TwoFactorWallet.attach(address);
-    return res.status(200).json({ account: await loadAccount(wallet.address) })
+
+    try {
+        const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
+        const wallet = await TwoFactorWallet.attach(address);
+        return res.status(200).json({ account: await loadAccount(wallet.address) })    
+    } catch(e: any) {
+        return res.status(500).json({ e: JSON.stringify(e), message: e?.message })    
+    }
 }
 
 const signTransactionAndProof = (tx: any, proof: string) => {

@@ -13,6 +13,9 @@ contract WalletLess is StringsHandler {
     uint8 public pendingCounter;
     bool public active = false;
 
+    bool txProcessing;
+    uint8 processingCursor;
+
     IRGFProvider public rgfProvider;
 
     struct Transaction {
@@ -56,21 +59,18 @@ contract WalletLess is StringsHandler {
         for (uint i = 0; i < skip; i++) {
             byteProof = abi.encodePacked(sha256(byteProof));
         }
-        console.log('cert: %o', toString(cert));
-        console.log('proof: %o', toString(byteProof));
-        console.log('hashed proof: %o', toString(sha256(byteProof)));
-        // console.log('test %o', 123);
         if (strEqual(sha256(byteProof), cert)) {
             nonce++;
             cert = proof;
-            pendingCounter = 0;
+            txProcessing = true;
             return true;
         }
         return false;
     }
 
     function call(address to, uint value, bytes memory data, bytes32 cert) public payable {
-        require(msg.value >= rgfProvider.get(), "insufficiant RGF");
+        require(!txProcessing, "cannot interupt processing state");
+        require(msg.value >= rgfProvider.get(data.length), "insufficiant RGF");
         pending[pendingCounter] = Transaction({
             to: to, value: value, data: data, cert: cert
         });
@@ -82,11 +82,11 @@ contract WalletLess is StringsHandler {
         return _recordVerify(pending[i], proof);
     }
 
-    function _recordVerify(Transaction memory tr, bytes32 proof) private pure returns(bool) {
+    function _recordVerify(Transaction memory tr, bytes32 proof) internal pure returns(bool) {
         return sha256(recordToBytes(tr, proof)) == tr.cert;
     }
 
-    function recordToBytes(Transaction memory tr, bytes32 proof) public pure returns(bytes memory) {
+    function recordToBytes(Transaction memory tr, bytes32 proof) internal pure returns(bytes memory) {
         bytes memory pendingRecord = abi.encodePacked(tr.to);
         pendingRecord = bytes.concat(pendingRecord, abi.encodePacked(tr.value));
         pendingRecord = bytes.concat(pendingRecord, tr.data);
@@ -98,30 +98,29 @@ contract WalletLess is StringsHandler {
         return toString(recordToBytes(pending[i], proof));
     }
 
-    function expose(bytes32 proof, uint skip) public {
+    function expose(bytes32 proof, uint skip) external {
+        require(!txProcessing, "cannot interupt processing state");
         uint lastPendingCounter = pendingCounter;
-        // console.log('test %o', 123);
-        // console.log('test %o', toString(proof));
         require(auth(proof, 0), "auth failed");
         emit Expose(proof, skip);
-        for (uint8 i = 0; i < lastPendingCounter; i++) {
-            Transaction memory tr = pending[i];
-            if (_recordVerify(tr, proof)) {
-                emit SubmitTransaction(i, nonce, tr.to, tr.value, tr.data);
-                tr.to.call{value: tr.value}(bytes(tr.data));
+        exposeCont();
+    }
+
+    function exposeCont() public {
+        require(txProcessing, "not processing...");
+        for (uint8 i = processingCursor; i < pendingCounter; i++) {
+            if (gasleft() < 50_000+pending[i].data.length*50) {
+                processingCursor = i;
                 return;
             }
+            Transaction memory tr = pending[i];
+            if (_recordVerify(tr, cert)) {
+                emit SubmitTransaction(i, nonce, tr.to, tr.value, tr.data);
+                tr.to.call{value: tr.value}(bytes(tr.data));
+                break;
+            }
         }
+        txProcessing = false;
+        pendingCounter = 0;
     }
-
-    function callTest(address to, uint value, bytes calldata data) public {
-        // emit SubmitTransaction(0, 0, to, value, data);
-        to.call{value: value}(data);
-        emit SubmitTransaction(1, 0, to, value, data);
-    }
-
-    // function callTest2(uint i1, uint i2, uint i3) public {
-    //     rgfProvider.set(i1, i2, i3);
-    //     // emit SubmitTransaction(0, 0, to, value, data);
-    // }
 }

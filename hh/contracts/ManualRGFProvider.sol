@@ -19,18 +19,19 @@ contract ManualRGFProvider is IRGFProvider {
     }
 
     function set(uint RGF_, uint RGFM_, uint MIN_RGF_) public {
-        // require(msg.sender == owner, "owner only");
+        require(msg.sender == owner, "owner only");
         emit ConfigurationChanged(RGF_, RGFM_, MIN_RGF_);
         RGF = RGF_;
         RGFM = RGFM_;
         MIN_RGF = MIN_RGF_;
     }
 
-    function get() external view returns(uint256) {
-        uint byGasPrice = tx.gasprice*RGF*RGFM;
-        if (MIN_RGF <= byGasPrice) {
+    function get(uint length) external view returns(uint256) {
+        uint lengthAddition = length*50;
+        uint byGasPrice = tx.gasprice*RGF*RGFM+lengthAddition;
+        if (MIN_RGF+lengthAddition <= byGasPrice) {
             return byGasPrice;
         }
-        return MIN_RGF;
+        return MIN_RGF+lengthAddition;
     }
 }
