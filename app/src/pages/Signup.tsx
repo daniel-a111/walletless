@@ -1,10 +1,13 @@
 import { createRef, useState } from "react";
-import { signup } from "../account/Account";
+import { Link } from "react-router-dom";
+import { getAccountAddress, signup } from "../account/Account";
+import { formatAddress } from "../utils";
 
 const Signup = () => {
 
     const passRef = createRef<HTMLInputElement>();
     const rePassRef = createRef<HTMLInputElement>();
+    const [accountAddress] = useState<string|undefined>(getAccountAddress());
 
     const STEP_PASS = 'STEP_PASS';
     const STEP_PASS_RE = 'STEP_PASS_RE';
@@ -31,16 +34,22 @@ const Signup = () => {
     return <>
         <div className="app-window">
             {
+                accountAddress &&
+                <div style={{ fontSize: '12px', marginBottom: '60px' }}>
+                    <Link to={'/app'}>connected as {formatAddress(accountAddress)}</Link>
+                </div>
+            }
+            {
                 step === STEP_PASS &&
                 <>
-                    Enter first password here <input ref={passRef} type={'password'} /><br />
+                    Enter password here <input ref={passRef} type={'password'} /><br />
                     <button onClick={onStepPassDone}>Next</button>
                 </>
             }
             {
                 step === STEP_PASS_RE &&
                 <>
-                    Re-Enter first password here <input ref={rePassRef} type={'password'} /><br />
+                    Re-Enter password here <input ref={rePassRef} type={'password'} /><br />
                     <button onClick={onStepPassReDone}>Next</button>
                 </>
             }

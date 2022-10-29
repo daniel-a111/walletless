@@ -16,7 +16,7 @@
 
 .nav {
   border-bottom: 1px solid #DADADA;
-  margin-bottom: 80px;
+  margin-bottom: 0px;
 }
 .content {
   width: 1311px;
@@ -119,6 +119,8 @@
   /* width: 1311px; */
   min-height: 1000px;
   margin: 0 auto;
+  overflow-y: scroll;
+  height: 590px;
 }
 .safes-container {
   float: right;
@@ -230,7 +232,7 @@ nav span {
 }
 
 .page-content {
-  padding: 20px 0;
+  padding: 100px 0 20px;
 }
 
 .forgot-password {

@@ -4,11 +4,21 @@ import sha256 from 'crypto-js/sha256';
 
 export const copyToClipboard = (e: any) => {
     /* Copy the text inside the text field */
-    navigator.clipboard.writeText(e.target.getAttribute('data-copy'));
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(e.target.getAttribute('data-copy'));
+    } else {
+        let input = document.createElement('input');
+        input.value = e.target.getAttribute('data-copy');
+        e.target.parentNode.appendChild(input);
+        input.focus();
+        input.select();
+        document.execCommand('copy');
+        input.remove();
+    }
     let text = e.target.innerText;
     e.target.innerText = text + ' copied!';
     setTimeout(() => {
-         e.target.innerText = text;
+            e.target.innerText = text;
     }, 1000);
  }
 

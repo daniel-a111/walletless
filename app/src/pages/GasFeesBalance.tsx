@@ -1,5 +1,5 @@
 import { createRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 import { getFeesAccountAddress, getGasFeesBalance, testPassword, transact } from "../account/Account";
 
@@ -41,7 +41,7 @@ const GasFeesBalance = () => {
 
     const [paymentGateway, setPaymentGateway] = useState<string>();
     const onClickCreatePaymentGateway = async () => {
-        setPaymentGateway(`http://localhost:3000/#/app/gateway?address=${feesAccount}&amount=${topupRef.current?.value||'0.0'}`);
+        setPaymentGateway(`${process.env.PUBLIC_URL}/#/app/gateway?address=${feesAccount}&amount=${topupRef.current?.value||'0.0'}`);
     }
 
     const ACTION_PAYMENT_GATEWAY = 1;
@@ -64,6 +64,7 @@ const GasFeesBalance = () => {
     return <>
         {/* <AppHeader /> */}
         <div className="app-window">
+            <Link style={{ float: 'left', display: 'inline-block', marginTop: '-60px' }} to={'/app'}>back</Link>
             {
                 feesAccount &&
                 <>

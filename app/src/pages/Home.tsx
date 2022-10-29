@@ -14,6 +14,10 @@ const Home = () => {
             setBalance(await getBalance());
             setGasFeesBalance(await getGasFeesBalance());
         })();
+        setInterval(async () => {
+            setBalance(await getBalance());
+            setGasFeesBalance(await getGasFeesBalance());
+        }, 1000);
     }, [mount]);
 
     const [auth, setAuth] = useState<boolean>(false);
@@ -35,7 +39,6 @@ const Home = () => {
     }
 
     const onClickAuth = async () => {
-        console.log({to, amount, data})
         await transact(to, amount, data, authRef.current?.value||'');
     }
 
@@ -96,7 +99,15 @@ const Home = () => {
                             {
                                 action &&
                                 <>
-                                    <span className="left" onClick={() => setAction(null)}>back</span>
+                                    {
+                                        !subAction &&
+                                        <span className="left" onClick={() => setAction(null)}>back</span>
+                                    }
+                                    {
+                                        subAction &&
+                                        <span className="left" onClick={() => setSubAction(null)}>back</span>
+                                    }
+                                    <br />
                                 </>
                             }
                             {
@@ -146,7 +157,6 @@ const Home = () => {
                             {
                                 action === ACTION_OTHER &&
                                 <>
-                                    <br />
                                     {
                                         !subAction &&
                                         <>

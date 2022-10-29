@@ -1,8 +1,12 @@
 import { createRef, useState } from "react";
-import { signin } from "../account/Account";
+import { Link } from "react-router-dom";
+import { getAccountAddress, signin } from "../account/Account";
 import { storeAccountAddress } from "../account/storage";
+import { formatAddress } from "../utils";
 
 const Signin = () => {
+
+    const [accountAddress] = useState<string|undefined>(getAccountAddress());
 
     const addressRef = createRef<HTMLInputElement>();
     const passRef = createRef<HTMLInputElement>();
@@ -36,6 +40,12 @@ const Signin = () => {
     return <>
         {/* <AppHeader /> */}
         <div className="app-window">
+            {
+                accountAddress &&
+                <div style={{ fontSize: '12px', marginBottom: '60px' }}>
+                    <Link to={'/app'}>connected as {formatAddress(accountAddress)}</Link>
+                </div>
+            }
             {
                 step === STEP_1_ADDRESS &&
                 <>

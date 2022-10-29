@@ -58,18 +58,18 @@ export const getAccount = async () => {
     }
 }
 export const getFeesAccountAddress = async (): Promise<string> => {
-    return (await getAccount()).feesAccount;
+    return account?.feesAccount;
 }
 export const getAccountByAddress = async (address: string) => {
     return await Backend.getAccount(address);
 }
 
 export const getBalance = async (): Promise<number> => {
-    return parseFloat((await getAccount()).balance);
+    return parseFloat(account?.balance||'0');
 }
 
 export const getGasFeesBalance = async (): Promise<number> => {
-    return parseFloat((await getAccount()).gasFeesBalance);
+    return parseFloat(account?.gasFeesBalance||'0');
 }
 
 export const transact = async (to: string, value: string, data: string, password: string) => {
@@ -94,8 +94,6 @@ const signTransactionAndProof = (tx: any, proof: string) => {
     for (let i = 0; i < 64-vhl; i++) {
       valueHex = '0'+valueHex;
     }
-    console.log({ perc: to+valueHex+data+proof })
-    console.log(to+valueHex+data+proof)
     let txCert = ethers.utils.sha256(to+valueHex+data+proof);
     return { txCert };
 }
@@ -120,17 +118,11 @@ export const setRGFParams = async (RGF: number, RGFM: number, MIN_RGF: number, p
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
     let providerAddress = account.RGFProvider.address;
 
-    console.log({ RGF, RGFM, MIN_RGF })
     let data = await setRGFParamData(providerAddress, RGF, RGFM, MIN_RGF);
     let address = account.address;
     let to = providerAddress;
     let value = ethers.utils.parseEther('0.0');
     let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-    console.log({ proof })
-    console.log('0x'+proof);
-    console.log({data});
-    console.log(data);
-
     await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert });
     await Backend.expose({ address, proof });
 }
@@ -144,12 +136,8 @@ export const setRGFProvider = async (RGFProvider: string, password: string) => {
     let to = address;
     let value = ethers.utils.parseEther('0.0');
     let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-
-    console.log({proof});
-    console.log('0x'+proof);
     await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert });
     await Backend.expose({ address, proof });
-    // await Backend.setRGFProvider({ address: account.address, RGFProvider, proof });
 }
 
 export const testPassword = async (password: string): Promise<boolean> => {
@@ -157,3 +145,11 @@ export const testPassword = async (password: string): Promise<boolean> => {
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
     return !!proof;
 }
+let account: any;
+const updateAccount = async () => {
+    if (accountAddress) {
+        account = await getAccount()
+    }
+    setTimeout(updateAccount, 2000);
+};
+updateAccount();

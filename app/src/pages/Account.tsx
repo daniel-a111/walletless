@@ -106,6 +106,7 @@ const Account = () => {
     return <>
         {/* <AppHeader /> */}
         <div className="app-window">
+            <Link style={{ float: 'left', display: 'inline-block', marginTop: '-60px' }} to={'/app'}>back</Link>
             {accountAddress &&
                 <>
                     you are connected to<br /><span style={{ fontSize: '24px', cursor: 'pointer' }}
