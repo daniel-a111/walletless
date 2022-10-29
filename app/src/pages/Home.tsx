@@ -30,7 +30,7 @@ const Home = () => {
 
     const [to, setTo] = useState<string>('');
     const [amount, setAmount] = useState<string>('0');
-    const [data, setData] = useState<string>('');
+    const [data, setData] = useState<string>('0x');
 
     const onClickSubmit = async () => {
         setTo(toRef.current?.value||'');
@@ -38,7 +38,7 @@ const Home = () => {
         if (isToWalletLess) {
             setData( await topupData(toRef.current?.value||''));
         } else {
-            setData(dataRef.current?.value||'');
+            setData(dataRef.current?.value||'0x');
         }
         setAuth(true);
     }
