@@ -1,21 +1,23 @@
 import { createRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { getAccountAddress, getBalance, getFeesAccountAddress, getFeesAccountBalance, getGasFeesBalance, testPassword, transact } from "../account/Account";
+import { clearAccount, getAccountAddress, getBalance, getFeesAccountBalance, getGasFeesBalance, testPassword, transact } from "../account/Account";
 import { topupData } from "../contracts";
 
 const Home = () => {
     let navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    let clear = searchParams.get("clear");
+
     const [mount] = useState<boolean>(false);
     const [accountAddress] = useState<string|undefined>(getAccountAddress());
-    const [feesAccountAddress, setFeesAccountAddress] = useState<string|undefined>();
-    const [feesAccountBalance, setFeesAccountBalance] = useState<number|undefined>();
     const [balance, setBalance] = useState<number>(0);
     const [gasFeesBalance, setGasFeesBalance] = useState<number>(0);
     useEffect(() => {
         (async () => {
-            setFeesAccountAddress(await getFeesAccountAddress());
-            setFeesAccountBalance(parseFloat(await getFeesAccountBalance()));
+            if (clear) {
+                clearAccount();
+            }
             setBalance(await getBalance());
             setGasFeesBalance(parseFloat(await getFeesAccountBalance()));
         })();

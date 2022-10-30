@@ -22,6 +22,11 @@ if (ethereum) {
     signer = provider?.getSigner();
 }
 
+export const clearAccount = () => {
+    storeAccountAddress(null);
+    storeFeesAccountAddress(null);
+}
+
 export const topup = async (address: string, amount: number) => {
     let contract = new ethers.Contract(address||'', NO_WALLET_ABI, signer);
     let amountStr = amount.toString();

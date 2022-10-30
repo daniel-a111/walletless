@@ -25,7 +25,7 @@ export const loadAccountAddress = (): string|undefined => {
     return localGetter(ACCOUNT_ADDRESS)||undefined;
 }
 
-export const storeAccountAddress = (address: string) => {
+export const storeAccountAddress = (address: string|null) => {
     localSetter(ACCOUNT_ADDRESS, address);
 }
 
@@ -33,6 +33,6 @@ export const loadFeesAccountAddress = (): string|undefined => {
     return localGetter(FEES_ACCOUNT_ADDRESS)||undefined;
 }
 
-export const storeFeesAccountAddress = (address: string) => {
+export const storeFeesAccountAddress = (address: string|null) => {
     localSetter(FEES_ACCOUNT_ADDRESS, address);
 }
