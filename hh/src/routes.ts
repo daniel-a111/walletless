@@ -8,5 +8,6 @@ router.post('/api/transact/preset', controller.transactPreset);
 router.post('/api/transact/expose', controller.expose);
 router.post('/api/transact', controller.transact);
 router.get('/api/account', controller.getAccount);
+router.post('/api/fees-account', controller.getGasFeeAccount);
 
 export = router;

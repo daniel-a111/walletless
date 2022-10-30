@@ -1,7 +1,7 @@
 import { createRef, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { getAccount, getAccountAddress, getFeesAccountAddress, getGasFeesBalance, testPassword, transact } from "../account/Account";
+import { getAccount, getAccountAddress, getFeesAccountAddress, getFeesAccountBalance, getGasFeesBalance, testPassword, transact } from "../account/Account";
 
 const GasFeesBalance = () => {
     let navigate = useNavigate();
@@ -15,7 +15,7 @@ const GasFeesBalance = () => {
             const update = async () => {
                 let feesAccount = await getFeesAccountAddress();
                 setFeesAccount(feesAccount);
-                setGasFeesBalance(await getGasFeesBalance());
+                setGasFeesBalance(parseFloat(await getFeesAccountBalance()));
                 if (accountAddress && !feesAccount) {
                     setTimeout(update, 500);
                 }

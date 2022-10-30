@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
-import { CONTRACT_DEPLOYER_NAME, CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_CONTRACT_NAME } from './constants';
+import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_CONTRACT_NAME } from './constants';
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
-const DEPLOYER_ADDRESS = '0x143BFb3EE5990f0DF7d278fB638a82F37Bd6eab1';
+const DEPLOYER_ADDRESS = '0x948B3c65b89DF0B4894ABE91E6D02FE579834F8F';
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
 interface SignupBody {
@@ -13,24 +13,60 @@ interface SignupBody {
     cert: string;
     nonceSize: number;
     rgfProvider: string;
+    feesAddress?: string;
+}
+
+const dataToAddress = (data: string) => {
+    return '0x'+data.substring(26);
 }
 
 const signup = async (req: Request, res: Response, next: NextFunction) => {
-    const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
-    let wallet = await TwoFactorWallet.deploy();
-    return res.status(200).json({ account: await loadAccount(wallet.address) })
+
+    let { feesAddress }: any = req.body;
+
+    // TODO cheap deploy
+    const [owner] = await ethers.getSigners();
+    const Depolyer = await ethers.getContractFactory(DEPOLYER_CONTRACT_NAME);
+    const deployer = await Depolyer.attach(DEPLOYER_ADDRESS);
+
+    try {
+        const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
+        let feesAccount: any = await FeesAccount.findOne({ where: { address: feesAddress } });
+        if (!feesAccount) {
+            return res.status(500).json({ message: 'fee account missing or dont have balance' })
+        }
+        let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
+        let walletAddress = await deployer.connect(addr).callStatic.createAccount();
+        let tr = await deployer.connect(addr).createAccount();
+        let receipt = await owner.provider?.getTransactionReceipt(tr.hash);
+        let [{data}] = receipt?.logs||[];
+        walletAddress = dataToAddress(data);
+        let wallet = TwoFactorWallet.attach(walletAddress);
+        feesAccount.walletAddress = wallet.address;
+        await feesAccount.save();
+        return res.status(200).json({ account: { address: wallet.address } });
+    } catch(e: any) {
+        return res.status(200).json({ error: e?.message||JSON.stringify(e)});
+    }
 }
 
 const initAccount = async (req: Request, res: Response, next: NextFunction) => {
 
-    let { address, cert, nonceSize }: SignupBody = req.body;
+    const [owner] = await ethers.getSigners();
+    let { address, cert, nonceSize, feesAddress }: SignupBody = req.body;
     const wallet = await loadWallet(address);    
     const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
     const RGFProvider = await ManualRGFProvider.deploy(wallet.address, RGF, RGFM, MIN_RGF);
+    console.log({a: RGFProvider.address})
 
     let walletAddress = address;
 
-    let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress } })
+    let feesAccount: any;
+    if (feesAddress) {
+        feesAccount = await FeesAccount.findOne({ where: { address: feesAddress } });
+    } else {
+        feesAccount = await FeesAccount.findOne({ where: { walletAddress } });
+    }
     if (!feesAccount) {
         let addressData = ethWallet.generate();
         console.log(`Private key = , ${addressData.getPrivateKeyString()}`);
@@ -38,14 +74,35 @@ const initAccount = async (req: Request, res: Response, next: NextFunction) => {
         feesAccount = FeesAccount.build({
             address: addressData.getAddressString(),
             PK: addressData.getPrivateKeyString(),
-            walletAddress
         });
-        await feesAccount.save()
     }
+    feesAccount.walletAddress = walletAddress;
+    await feesAccount.save()
 
-    await wallet.init( '0x'+cert, nonceSize, RGFProvider.address);
-
+    let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
+    let tr = await wallet.connect(addr).init( '0x'+cert, nonceSize, RGFProvider.address, { gasLimit: 500_000 });
+    console.log(tr);
     return res.status(200).json({ account: await loadAccount(wallet.address) })
+}
+
+const getGasFeeAccount = async (req: Request, res: Response, next: NextFunction) => {
+
+    const [owner] = await ethers.getSigners();
+    let { address } = req.body;
+    if (!address) {
+        let addressData = ethWallet.generate();
+        console.log(`Private key = , ${addressData.getPrivateKeyString()}`);
+        console.log(`Address = , ${addressData.getAddressString()}`);
+        let feesAccount: any = FeesAccount.build({
+            address: addressData.getAddressString(),
+            PK: addressData.getPrivateKeyString(),
+        });
+        await feesAccount.save();
+        return res.status(200).json({ feesAccount: feesAccount.address, balance: await owner.provider?.getBalance(feesAccount.address)||'0'})
+    } else {
+        return res.status(200).json({ feesAccount: address, balance: ethers.utils.formatEther(await owner.provider?.getBalance(address)||'0.0')})
+
+    }
 }
 
 const loadAccount = async (address: string) => {
@@ -123,15 +180,22 @@ const loadWallet = async (address: string) => {
 const transact = async (req: Request, res: Response, next: NextFunction) => {
     let { address, to, value: valueStr, data, proof }: any = req.body;
 
+    const [owner] = await ethers.getSigners();
+    let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
+    if (!feesAccount) {
+        return res.status(500).json({ message: 'fee account missing or dont have balance' })
+    }
+    let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
+
     const wallet = await loadWallet(address);
     let value = ethers.utils.parseEther(valueStr);
     const gweiValue = MIN_RGF;
     if (to) {
         let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-        let recordTr = await wallet.call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
+        let recordTr = await wallet.connect(addr).call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
         console.log({ recordTr })    
     }
-    let tr = await wallet.expose('0x'+proof, 0, { gasLimit: 500_000});
+    let tr = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit: 500_000});
     console.log({ tr });
 
     return res.status(200).json({ account: await loadAccount(address) })
@@ -141,11 +205,18 @@ const transact = async (req: Request, res: Response, next: NextFunction) => {
 const transactPreset = async (req: Request, res: Response, next: NextFunction) => {
     let { address, to, value: valueStr, data, txCert }: any = req.body;
 
+    const [owner] = await ethers.getSigners();
+    let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
+    if (!feesAccount) {
+        return res.status(500).json({ message: 'fee account missing or dont have balance' })
+    }
+    let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
+
     console.log({ address, to, valueStr });
     const wallet = await loadWallet(address);
     let value = ethers.utils.parseEther(valueStr);
     const gweiValue = MIN_RGF;
-    let recordTr = await wallet.call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
+    let recordTr = await wallet.connect(addr).call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
     console.log({ recordTr })    
 
     return res.status(200).json({ account: await loadAccount(address) })
@@ -154,8 +225,16 @@ const transactPreset = async (req: Request, res: Response, next: NextFunction) =
 
 const expose = async (req: Request, res: Response, next: NextFunction) => {
     let { address, proof }: any = req.body;
+
+    const [owner] = await ethers.getSigners();
+    let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
+    if (!feesAccount) {
+        return res.status(500).json({ message: 'fee account missing or dont have balance' })
+    }
+    let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
+
     const wallet = await loadWallet(address);
-    let tr = await wallet.expose('0x'+proof, 0, { gasLimit: 500_000});
+    let tr = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit: 500_000});
     console.log({ tr });
     return res.status(200).json({ account: await loadAccount(address) })
 }
@@ -163,6 +242,7 @@ const expose = async (req: Request, res: Response, next: NextFunction) => {
 
 export default {
     signup,
+    getGasFeeAccount,
     initAccount,
     getAccount,
     transact,

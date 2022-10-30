@@ -4,7 +4,10 @@ import "./WalletLess.sol";
 
 contract WalletLessDeployer {
 
+    event newAccount(address account);
     function createAccount() public returns(address) {
-        return address(new WalletLess());
+        WalletLess account = new WalletLess();
+        emit newAccount(address(account));
+        return address(account);
     }
 }

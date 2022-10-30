@@ -4,10 +4,17 @@ import config from "../config";
 
 const API_BASE_URL = `${config.API_BASE_URL}/api`
 
-export const signup = async (): Promise<string> => {
-    const res = await axios.post(`${API_BASE_URL}/signup`);
+export const signup = async (feesAddress: string): Promise<string> => {
+    const res = await axios.post(`${API_BASE_URL}/signup`, { feesAddress });
     console.log({ res });
     return res.data.account.address;
+}
+
+
+export const getFeesAccount = async (address?:string): Promise<string> => {
+    const res = await axios.post(`${API_BASE_URL}/fees-account`, {address});
+    console.log({ res });
+    return res.data;
 }
 
 export const init = async (address: string, cert: string, nonceSize: number): Promise<string> => {

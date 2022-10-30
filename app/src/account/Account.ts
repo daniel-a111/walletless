@@ -1,7 +1,9 @@
 import * as Backend from "../backend";
 import {
     loadAccountAddress,
+    loadFeesAccountAddress,
     storeAccountAddress,
+    storeFeesAccountAddress,
 } from "./storage";
 import { ethers } from "ethers";
 import { NO_WALLET_ABI } from "../contracts/abis";
@@ -9,6 +11,7 @@ import { passwordsAndAddressAndCertAndNonceToProof, passwordsToCertsAndNonceAndA
 import { resetPasswordData, setRGFParamData, setRGFProviderData } from "../contracts";
 
 let accountAddress: string|undefined = loadAccountAddress();
+let feesAccount: string|undefined = loadFeesAccountAddress();
 
 const { ethereum }: any = window;
 let provider: any;
@@ -33,7 +36,7 @@ export const getAccountAddress = (): string|undefined => {
 }
 
 export const signup = async (password: string): Promise<string> => {
-    accountAddress = await Backend.signup();
+    accountAddress = await Backend.signup(feesAccount||'');
     storeAccountAddress(accountAddress);
 
     let { cert, nonceSize } = passwordsToCertsAndNonceAndAddress(password, accountAddress);
@@ -58,7 +61,18 @@ export const getAccount = async () => {
     }
 }
 export const getFeesAccountAddress = async (): Promise<string> => {
-    return account?.feesAccount;
+    if (!account?.feesAccount && !feesAccount) {
+        let { feesAccount: fa, balance }: any = await Backend.getFeesAccount(feesAccount);
+        storeFeesAccountAddress(fa);
+        feesAccount = fa;
+    }
+    return account?.feesAccount||feesAccount;
+}
+export const getFeesAccountBalance = async (): Promise<string> => {
+    let { feesAccount: fa, balance }: any = await Backend.getFeesAccount(feesAccount);
+    storeFeesAccountAddress(fa);
+    feesAccount = fa;
+    return balance;
 }
 export const getAccountByAddress = async (address: string) => {
     return await Backend.getAccount(address);

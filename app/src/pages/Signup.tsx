@@ -1,7 +1,7 @@
-import { createRef, useState } from "react";
+import { createRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAccountAddress, signup } from "../account/Account";
-import { formatAddress } from "../utils";
+import { getAccountAddress, getFeesAccountAddress, getFeesAccountBalance, signup } from "../account/Account";
+import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 
 const Signup = () => {
 
@@ -9,13 +9,23 @@ const Signup = () => {
     const rePassRef = createRef<HTMLInputElement>();
     const [accountAddress, setAccountAddress] = useState<string|undefined>(getAccountAddress());
 
+    const [feesAccountAddress, setFeesAccountAddress] = useState<string|undefined>();
+    const [feesAccountBalance, setFeesAccountBalance] = useState<number|undefined>();
+
     const STEP_PASS = 'STEP_PASS';
     const STEP_PASS_RE = 'STEP_PASS_RE';
     const STEP_DONE = 'STEP_DONE';
 
+    const [mount] = useState<boolean>(true);
     const [step, setStep] = useState<string>(STEP_PASS);
     const [pass, setPass] = useState<string>();
 
+    useEffect(() => {
+        (async () => {
+            setFeesAccountAddress(await getFeesAccountAddress());
+            setFeesAccountBalance(parseFloat(await getFeesAccountBalance()));
+        })();
+    })
     const onStepPassDone = () => {
         if (passRef.current?.value) {
             setPass(passRef.current?.value);
@@ -34,6 +44,12 @@ const Signup = () => {
 
     return <>
         <div className="app-window">
+            {feesAccountAddress && feesAccountBalance !== undefined &&
+                <div style={{marginBottom: '20px', lineHeight: '30px'}}>
+                    Fees Address: <span style={{fontWeight: '600'}} onClick={copyToClipboard} data-copy={feesAccountAddress}>{formatAddress(feesAccountAddress)}</span><br />
+                    Balance: <span>{formatBalancePrimitive(feesAccountBalance)}$</span>
+                </div>
+            }
             {
                 accountAddress &&
                 <div style={{ fontSize: '12px', marginBottom: '60px' }}>

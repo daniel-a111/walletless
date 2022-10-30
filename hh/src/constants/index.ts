@@ -1,7 +1,7 @@
 import {BigNumber} from 'ethers';
 
 
-export const CONTRACT_DEPLOYER_NAME = 'WalletLessDeployer';
+export const DEPOLYER_CONTRACT_NAME = 'WalletLessDeployer';
 export const CONTRACT_NAME = 'WalletLess';
 export const RGF_MANUAL_CONTRACT_NAME = 'ManualRGFProvider';
 export const RGF = BigNumber.from('1');
