@@ -126,7 +126,7 @@ export const passwordsToCertsAndNonceAndAddress = (password: string, address: st
     for (let i = 0; i < 4000; i++) {
         cert = sha256(cert);
     }
-    return { cert: cert.toString(), nonceSize: 4000 }
+    return { cert: '0x'+cert.toString(), nonceSize: 4000 }
 }
 
 export const passwordsAndAddressAndCertAndNonceToProof = (password: string, address: string, cert: string, nonce: number, nonceSize: number) => {

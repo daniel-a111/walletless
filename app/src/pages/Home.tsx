@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 import { clearAccount, getAccountAddress, getBalance, getFeesAccountBalance, getGasFeesBalance, testPassword, transact } from "../account/Account";
 import { topupData } from "../contracts";
+import { loadAccountAddress } from "../account/storage";
 
 const Home = () => {
     let navigate = useNavigate();
@@ -10,7 +11,7 @@ const Home = () => {
     let clear = searchParams.get("clear");
 
     const [mount] = useState<boolean>(false);
-    const [accountAddress] = useState<string|undefined>(getAccountAddress());
+    const [accountAddress, setAccountAddress] = useState<string|undefined>(loadAccountAddress());
     const [balance, setBalance] = useState<number>(0);
     const [gasFeesBalance, setGasFeesBalance] = useState<number>(0);
     useEffect(() => {
@@ -18,6 +19,7 @@ const Home = () => {
             if (clear) {
                 clearAccount();
             }
+            setAccountAddress(loadAccountAddress());
             setBalance(await getBalance());
             setGasFeesBalance(parseFloat(await getFeesAccountBalance()));
         })();

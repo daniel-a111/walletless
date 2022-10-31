@@ -67,6 +67,10 @@ const Signin = () => {
                     You logged in login!
                 </>
             }
+            <div style={{marginTop: '30px'}}>
+                or<br />
+                <Link to={'/app/signup'}>sign-up</Link>
+            </div>
 
         </div>
     </>;

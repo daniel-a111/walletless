@@ -29,7 +29,13 @@ contract WalletLess is StringsHandler {
     event Expose(bytes32 proof, uint skip);
     event SubmitTransaction(uint i, uint nonce, address to, uint value, bytes data);
 
+    address public initializer;
+    constructor() {
+        initializer = msg.sender;
+    }
+
     function init(bytes32 cert_, uint nonceSize_, IRGFProvider rgfProvider_) public {
+        require(msg.sender == initializer, "initializer only");
         require(!active, "already active");
         cert = cert_;
         nonceSize = nonceSize_;

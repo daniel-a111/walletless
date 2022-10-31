@@ -5,8 +5,12 @@ import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_C
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
-const DEPLOYER_ADDRESS = '0x948B3c65b89DF0B4894ABE91E6D02FE579834F8F';
+const DEPLOYER_ADDRESS = '0x0b48aF34f4c854F5ae1A3D587da471FeA45bAD52';
+// const DEPLOYER_ADDRESS = '0x0C30e09d76F4B21DCE23541407B94753Bf786B6c'; // Matic
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
+
+let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
+let maxPriorityFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
 
 interface SignupBody {
     address: string;
@@ -20,6 +24,79 @@ const dataToAddress = (data: string) => {
     return '0x'+data.substring(26);
 }
 
+const signupTxStatus = async (req: Request, res: Response, next: NextFunction) => {
+
+    let { hash }: any = req.query;
+
+    const [owner] = await ethers.getSigners();
+    try {
+
+        console.log({hash});
+        let receipt = await owner.provider?.getTransactionReceipt(hash);
+        console.log({ receipt });
+
+        if (!receipt?.logs || receipt.logs.length === 0) {
+            return res.status(500).json({ message: 'no logs' })
+        }
+        let [{data}] = receipt?.logs||[];
+        console.log({data})
+        let walletAddress = dataToAddress(data);
+        let wallet = await loadWallet(walletAddress)
+        return res.status(200).json({ success: true, done: true, account: { address: wallet.address } });
+    } catch(e: any) {
+        // throw e;
+        return res.status(200).json({ error: e?.message||JSON.stringify(e)});
+    }
+}
+
+const initTxStatus = async (req: Request, res: Response, next: NextFunction) => {
+
+    let { hash }: any = req.query;
+
+    // // TODO cheap deploy
+    const [owner] = await ethers.getSigners();
+
+    try {
+        console.log({hash});
+        let receipt = await owner.provider?.getTransactionReceipt(hash);
+        console.log({ receipt });
+        return res.status(200).json({ success: true });
+
+    } catch(e: any) {
+        // throw e;
+        return res.status(200).json({ error: e?.message||JSON.stringify(e)});
+    }
+}
+
+
+
+const reciept = async (req: Request, res: Response, next: NextFunction) => {
+
+    let { hash }: any = req.query;
+
+    // // TODO cheap deploy
+    const [owner] = await ethers.getSigners();
+
+    try {
+        const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
+        console.log({hash});
+        let receipt = await owner.provider?.getTransactionReceipt(hash);
+        console.log({ receipt });
+        if (!receipt?.logs || receipt.logs.length === 0) {
+            return res.status(500).json({ message: 'no logs' })
+        }
+        let [{data}] = receipt?.logs||[];
+        console.log({data})
+        let walletAddress = dataToAddress(data);
+        let wallet = TwoFactorWallet.attach(walletAddress);
+        return res.status(200).json({ account: { address: wallet.address } });
+
+    } catch(e: any) {
+        // throw e;
+        return res.status(200).json({ error: e?.message||JSON.stringify(e)});
+    }
+}
+
 const signup = async (req: Request, res: Response, next: NextFunction) => {
 
     let { feesAddress }: any = req.body;
@@ -27,24 +104,16 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     // TODO cheap deploy
     const [owner] = await ethers.getSigners();
     const Depolyer = await ethers.getContractFactory(DEPOLYER_CONTRACT_NAME);
-    const deployer = await Depolyer.attach(DEPLOYER_ADDRESS);
+    const deployer = Depolyer.attach(DEPLOYER_ADDRESS);
 
     try {
-        const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
         let feesAccount: any = await FeesAccount.findOne({ where: { address: feesAddress } });
         if (!feesAccount) {
             return res.status(500).json({ message: 'fee account missing or dont have balance' })
         }
         let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
-        let walletAddress = await deployer.connect(addr).callStatic.createAccount();
-        let tr = await deployer.connect(addr).createAccount();
-        let receipt = await owner.provider?.getTransactionReceipt(tr.hash);
-        let [{data}] = receipt?.logs||[];
-        walletAddress = dataToAddress(data);
-        let wallet = TwoFactorWallet.attach(walletAddress);
-        feesAccount.walletAddress = wallet.address;
-        await feesAccount.save();
-        return res.status(200).json({ account: { address: wallet.address } });
+        let tx = await deployer.connect(addr).createAccount({ gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+        return res.status(200).json({ tx });
     } catch(e: any) {
         return res.status(200).json({ error: e?.message||JSON.stringify(e)});
     }
@@ -54,19 +123,11 @@ const initAccount = async (req: Request, res: Response, next: NextFunction) => {
 
     const [owner] = await ethers.getSigners();
     let { address, cert, nonceSize, feesAddress }: SignupBody = req.body;
-    const wallet = await loadWallet(address);    
-    const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
-    const RGFProvider = await ManualRGFProvider.deploy(wallet.address, RGF, RGFM, MIN_RGF);
-    console.log({a: RGFProvider.address})
+    // const wallet = await loadWallet(address);
+    const Depolyer = await ethers.getContractFactory(DEPOLYER_CONTRACT_NAME);
+    const deployer = Depolyer.attach(DEPLOYER_ADDRESS);
 
-    let walletAddress = address;
-
-    let feesAccount: any;
-    if (feesAddress) {
-        feesAccount = await FeesAccount.findOne({ where: { address: feesAddress } });
-    } else {
-        feesAccount = await FeesAccount.findOne({ where: { walletAddress } });
-    }
+    let feesAccount: any = await FeesAccount.findOne({ where: { address: feesAddress } });
     if (!feesAccount) {
         let addressData = ethWallet.generate();
         console.log(`Private key = , ${addressData.getPrivateKeyString()}`);
@@ -76,13 +137,16 @@ const initAccount = async (req: Request, res: Response, next: NextFunction) => {
             PK: addressData.getPrivateKeyString(),
         });
     }
-    feesAccount.walletAddress = walletAddress;
+    feesAccount.walletAddress = address;
     await feesAccount.save()
 
+
+    if (!feesAccount) {
+        return res.status(500).json({ message: 'fee account missing or dont have balance' })
+    }
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
-    let tr = await wallet.connect(addr).init( '0x'+cert, nonceSize, RGFProvider.address, { gasLimit: 500_000 });
-    console.log(tr);
-    return res.status(200).json({ account: await loadAccount(wallet.address) })
+    let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+    return res.status(200).json({ tx });
 }
 
 const getGasFeeAccount = async (req: Request, res: Response, next: NextFunction) => {
@@ -107,24 +171,14 @@ const getGasFeeAccount = async (req: Request, res: Response, next: NextFunction)
 
 const loadAccount = async (address: string) => {
 
+    console.log({address})
     const [owner, addr1, addr2, addr3] = await ethers.getSigners();
     const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
-    const wallet = await TwoFactorWallet.attach(address);
+    const wallet = TwoFactorWallet.attach(address);
 
-    const RGFProviderAddress = await wallet.rgfProvider();
-    const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
-    const RGFProvider = await ManualRGFProvider.attach(RGFProviderAddress);
-
-    // let addressData = ethWallet.generate();
-    // console.log(`Private key = , ${addressData.getPrivateKeyString()}`);
-    // console.log(`Address = , ${addressData.getAddressString()}`);
-
-    // let feesAccount = FeesAccount.build({ address: addressData.getAddressString(), PK: addressData.getPrivateKeyString() });
-    // await feesAccount.save();
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } })
 
     let feesAccountAddress = feesAccount?.address||FEES_ACCOUNT;
-
     let isActive = await wallet.active();
     let account: any = {
         address,
@@ -138,6 +192,9 @@ const loadAccount = async (address: string) => {
 
     try {
         if (isActive) {
+            const RGFProviderAddress = await wallet.rgfProvider();
+            const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
+            const RGFProvider = ManualRGFProvider.attach(RGFProviderAddress);
             account.RGFProvider = {
                 address: RGFProviderAddress,
                 RGF: parseInt(ethers.utils.formatUnits(await RGFProvider.RGF(), 0)),
@@ -154,7 +211,7 @@ const getAccount = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
         const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
-        const wallet = await TwoFactorWallet.attach(address);
+        const wallet = TwoFactorWallet.attach(address);
         return res.status(200).json({ account: await loadAccount(wallet.address) })    
     } catch(e: any) {
         return res.status(500).json({ e: JSON.stringify(e), message: e?.message })    
@@ -241,6 +298,7 @@ const expose = async (req: Request, res: Response, next: NextFunction) => {
 
 
 export default {
+    reciept,
     signup,
     getGasFeeAccount,
     initAccount,
@@ -248,4 +306,6 @@ export default {
     transact,
     transactPreset,
     expose,
+    signupTxStatus,
+    initTxStatus
 };

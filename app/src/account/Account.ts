@@ -2,14 +2,19 @@ import * as Backend from "../backend";
 import {
     loadAccountAddress,
     loadFeesAccountAddress,
+    loadInitTxHash,
+    loadSignupTxHash,
     storeAccountAddress,
     storeFeesAccountAddress,
+    storeSignupTxHash,
 } from "./storage";
 import { ethers } from "ethers";
 import { NO_WALLET_ABI } from "../contracts/abis";
 import { passwordsAndAddressAndCertAndNonceToProof, passwordsToCertsAndNonceAndAddress } from "../utils";
 import { resetPasswordData, setRGFParamData, setRGFProviderData } from "../contracts";
 
+let signupTxHash: string|undefined = loadSignupTxHash();
+let initTxHash: string|undefined = loadInitTxHash();
 let accountAddress: string|undefined = loadAccountAddress();
 let feesAccount: string|undefined = loadFeesAccountAddress();
 
@@ -40,14 +45,21 @@ export const getAccountAddress = (): string|undefined => {
     return accountAddress;
 }
 
-export const signup = async (password: string): Promise<string> => {
-    accountAddress = await Backend.signup(feesAccount||'');
-    storeAccountAddress(accountAddress);
+export const deployAccount = async () => {
+    signupTxHash = await Backend.signup(feesAccount||'');
+    storeSignupTxHash(signupTxHash);
+    return signupTxHash;
+}
 
-    let { cert, nonceSize } = passwordsToCertsAndNonceAndAddress(password, accountAddress);
+export const initAccount = async (password: string) => {
 
-    await Backend.init(accountAddress, cert, nonceSize);
-    return accountAddress;
+    let accountAddress = loadAccountAddress();
+    console.log({ accountAddress })
+    if (accountAddress) {
+        let { cert, nonceSize } = passwordsToCertsAndNonceAndAddress(password, accountAddress||'');
+        initTxHash = await Backend.init(accountAddress||'', cert, nonceSize, feesAccount||'');
+        return initTxHash;
+    }
 }
 
 export const signin = async (address: string, password: string): Promise<boolean> => {
@@ -175,6 +187,7 @@ export const testPassword = async (password: string): Promise<boolean> => {
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
     return !!proof;
 }
+
 let account: any;
 const updateAccount = async () => {
     if (accountAddress) {

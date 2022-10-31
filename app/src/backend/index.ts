@@ -7,9 +7,28 @@ const API_BASE_URL = `${config.API_BASE_URL}/api`
 export const signup = async (feesAddress: string): Promise<string> => {
     const res = await axios.post(`${API_BASE_URL}/signup`, { feesAddress });
     console.log({ res });
-    return res.data.account.address;
+    return res.data.tx.hash;
 }
 
+
+export const signupTxStatus = async (hash: string): Promise<any> => {
+    const res = await axios.get(`${API_BASE_URL}/tx/status/singup`, { params: {hash} });
+    console.log({ res });
+    return res.data;
+}
+
+
+export const initTxStatus = async (hash: string): Promise<boolean> => {
+    const res = await axios.get(`${API_BASE_URL}/tx/status/init`, { params: {hash} });
+    console.log({ res });
+    return res.data;
+}
+
+export const receipt = async (hash: string): Promise<string> => {
+    const res = await axios.get(`${API_BASE_URL}/reciept`, { params: {hash} });
+    console.log({ res });
+    return res.data.account?.address;
+}
 
 export const getFeesAccount = async (address?:string): Promise<string> => {
     const res = await axios.post(`${API_BASE_URL}/fees-account`, {address});
@@ -17,12 +36,12 @@ export const getFeesAccount = async (address?:string): Promise<string> => {
     return res.data;
 }
 
-export const init = async (address: string, cert: string, nonceSize: number): Promise<string> => {
+export const init = async (address: string, cert: string, nonceSize: number, feesAddress: string): Promise<string> => {
     const res = await axios.post(`${API_BASE_URL}/init`, {
-        address, cert, nonceSize
+        address, cert, nonceSize, feesAddress
     });
     console.log({ res });
-    return res.data.account.address;
+    return res.data.tx.hash;
 }
 
 export const getAccount = async (address: string): Promise<any> => {
@@ -60,17 +79,3 @@ export const expose = async ({address, proof}: any) => {
     return res.data.transaction;
 }
 
-
-// export const setRGFParams = async ({address, RGF, RGFM, MIN_RGF, proof}: any) => {
-//     const res = await axios.post(`${API_BASE_URL}/RGF/params`, {
-//         address, RGF, RGFM, MIN_RGF, proof
-//     });
-//     return res.data.transaction;
-// }
-
-// export const setRGFProvider = async ({address, RGFProvider, proof}: any) => {
-//     const res = await axios.post(`${API_BASE_URL}/RGF`, {
-//         address, RGFProvider, proof
-//     });
-//     return res.data.transaction;
-// }

@@ -1,5 +1,7 @@
 const ACCOUNT_ADDRESS = 'account_address';
 const FEES_ACCOUNT_ADDRESS = 'fees_account_address';
+const SIGNUP_TX_HAS = 'signup-tx-hash';
+const INIT_TX_HAS = 'init-tx-hash';
 
 const localGetter = (key: string) => {
     return localStorage.getItem(key) || null;
@@ -35,4 +37,20 @@ export const loadFeesAccountAddress = (): string|undefined => {
 
 export const storeFeesAccountAddress = (address: string|null) => {
     localSetter(FEES_ACCOUNT_ADDRESS, address);
+}
+
+export const loadSignupTxHash = (): string|undefined => {
+    return localGetter(SIGNUP_TX_HAS)||undefined;
+}
+
+export const storeSignupTxHash = (hash: string|null) => {
+    localSetter(SIGNUP_TX_HAS, hash);
+}
+
+export const loadInitTxHash = (): string|undefined => {
+    return localGetter(INIT_TX_HAS)||undefined;
+}
+
+export const storeInitTxHash = (hash: string|null) => {
+    localSetter(INIT_TX_HAS, hash);
 }
