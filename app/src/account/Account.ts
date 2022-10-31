@@ -38,7 +38,7 @@ export const topup = async (address: string, amount: number) => {
     if (amountStr.indexOf('.')<0) {
         amountStr += '.';
     }
-    await contract.topup({ value: ethers.utils.parseEther(amountStr) });
+    await contract.payment({ value: ethers.utils.parseEther(amountStr) });
 }
 
 export const getAccountAddress = (): string|undefined => {

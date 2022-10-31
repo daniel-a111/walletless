@@ -2,7 +2,6 @@ pragma solidity ^0.8.9;
 
 import "./IRGFProvider.sol";
 import "./StringsHandler.sol";
-import "hardhat/console.sol";
 
 contract WalletLess is StringsHandler {
 
@@ -45,20 +44,7 @@ contract WalletLess is StringsHandler {
         rgfProvider = rgfProvider_;
     }
 
-    function resetPassword(bytes32 cert_, uint nonceSize_) external {
-        require(msg.sender == address(this), "internal only");
-        cert = cert_;
-        nonceSize = nonceSize_;
-        nonce = 0;
-        pendingCounter = 0;
-    }
-
-    function setRGFProvider(IRGFProvider rgfProvider_) external {
-        require(msg.sender == address(this), "internal only");
-        rgfProvider = rgfProvider_;
-    }
-
-    function topup() payable public {}
+    function payment() payable public {}
 
     function auth(bytes32 proof, uint skip) private returns (bool) {
         bytes memory byteProof = abi.encodePacked(proof);
@@ -128,5 +114,19 @@ contract WalletLess is StringsHandler {
         }
         txProcessing = false;
         pendingCounter = 0;
+    }
+
+
+    function resetPassword(bytes32 cert_, uint nonceSize_) external {
+        require(msg.sender == address(this), "internal only");
+        cert = cert_;
+        nonceSize = nonceSize_;
+        nonce = 0;
+        pendingCounter = 0;
+    }
+
+    function setRGFProvider(IRGFProvider rgfProvider_) external {
+        require(msg.sender == address(this), "internal only");
+        rgfProvider = rgfProvider_;
     }
 }

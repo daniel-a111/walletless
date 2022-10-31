@@ -24,6 +24,6 @@ export const setRGFParamData = async (address: string, RGF_NEW: number, RGFM_NEW
 export const topupData = async (address: string) => {
     let c = new ethers.Contract(address, NO_WALLET_ABI);
     const iface = c.interface;
-    return iface.encodeFunctionData('topup', []);
+    return iface.encodeFunctionData('payment', []);
 }
 

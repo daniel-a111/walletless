@@ -6,7 +6,8 @@ import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
 // const DEPLOYER_ADDRESS = '0x0b48aF34f4c854F5ae1A3D587da471FeA45bAD52'; // aws
-const DEPLOYER_ADDRESS = '0xE80036EC7030dB81baf90140Ba23D80966019a95'; // Matic
+const DEPLOYER_ADDRESS = '0x77D7A923De822FC0C282cc29334e3B03B8701da2'; // MATIC
+// const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
 let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
@@ -70,7 +71,23 @@ const initTxStatus = async (req: Request, res: Response, next: NextFunction) => 
 
 
 
-const reciept = async (req: Request, res: Response, next: NextFunction) => {
+const receipt = async (req: Request, res: Response, next: NextFunction) => {
+
+    let { hash }: any = req.query;
+
+    // // TODO cheap deploy
+    const [owner] = await ethers.getSigners();
+    try {
+        let receipt = await owner.provider?.getTransactionReceipt(hash);
+        return res.status(200).json({ receipt });
+    } catch(e: any) {
+        // throw e;
+        return res.status(200).json({ error: e?.message||JSON.stringify(e)});
+    }
+}
+
+
+const tx = async (req: Request, res: Response, next: NextFunction) => {
 
     let { hash }: any = req.query;
 
@@ -78,18 +95,9 @@ const reciept = async (req: Request, res: Response, next: NextFunction) => {
     const [owner] = await ethers.getSigners();
 
     try {
-        const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
         console.log({hash});
-        let receipt = await owner.provider?.getTransactionReceipt(hash);
-        console.log({ receipt });
-        if (!receipt?.logs || receipt.logs.length === 0) {
-            return res.status(500).json({ message: 'no logs' })
-        }
-        let [{data}] = receipt?.logs||[];
-        console.log({data})
-        let walletAddress = dataToAddress(data);
-        let wallet = TwoFactorWallet.attach(walletAddress);
-        return res.status(200).json({ account: { address: wallet.address } });
+        let tx = await owner.provider?.getTransaction(hash);
+        return res.status(200).json({ tx });
 
     } catch(e: any) {
         // throw e;
@@ -298,7 +306,8 @@ const expose = async (req: Request, res: Response, next: NextFunction) => {
 
 
 export default {
-    reciept,
+    receipt,
+    tx,
     signup,
     getGasFeeAccount,
     initAccount,

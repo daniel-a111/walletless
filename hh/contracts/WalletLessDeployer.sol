@@ -9,15 +9,15 @@ contract WalletLessDeployer {
     event newAccount(address account);
     function createAccount() public returns(address) {
         WalletLess account = new WalletLess();
-        emit newAccount(address(account));
-        walletlessToWallet[address(account)] = msg.sender;
-        return address(account);
+        address newAccountAddress = address(account);
+        emit newAccount(newAccountAddress);
+        walletlessToWallet[newAccountAddress] = msg.sender;
+        return newAccountAddress;
     }
 
     function initAcount(address account, bytes32 cert, uint nonceSize, uint RGF, uint RGFM, uint MIN_RGF) public {
         require(msg.sender == walletlessToWallet[account], "wrong wallet");
         WalletLess walletless = WalletLess(account);
-
         ManualRGFProvider rgf = new ManualRGFProvider(account, RGF, RGFM, MIN_RGF);
         walletless.init(cert, nonceSize, rgf);
     }

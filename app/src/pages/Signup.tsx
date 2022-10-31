@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { deployAccount, getAccount, getAccountAddress, getFeesAccountAddress, getFeesAccountBalance, initAccount } from "../account/Account";
 import { loadFeesAccountAddress, loadInitTxHash, loadSignupTxHash, storeAccountAddress, storeInitTxHash, storeSignupTxHash } from "../account/storage";
 import * as Backend from "../backend";
+import config from "../config";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 
 const Signup = () => {
@@ -119,6 +120,18 @@ const Signup = () => {
 
     return <>
         <div className="app-window">
+            {
+                signupTxHash && !initTxHash &&
+                <div style={{marginBottom: '40px', fontSize: '12px'}}>
+                    deployment on tx <a target={'_blank'} href={`${config.TX_INFO_URL.replaceAll('{hash}', signupTxHash)}`}>{formatAddress(signupTxHash)}</a>...
+                </div>
+            }
+            {
+                initTxHash &&
+                <div style={{marginBottom: '40px', fontSize: '12px'}}>
+                    account auth init on tx <a target={'_blank'} href={`${config.TX_INFO_URL.replaceAll('{hash}', initTxHash)}`}>{formatAddress(initTxHash)}</a>...
+                </div>
+            }
             {feesAccountAddress && feesAccountBalance !== undefined &&
                 <div style={{marginBottom: '20px', lineHeight: '30px'}}>
                     Fees Address: <span style={{fontWeight: '600'}} onClick={copyToClipboard} data-copy={feesAccountAddress}>{formatAddress(feesAccountAddress)}</span><br />
