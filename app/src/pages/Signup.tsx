@@ -56,17 +56,21 @@ const Signup = () => {
             setTimeout(handleSignupTxHash, 1000);
             return;
         }
-        let { done, success, account } = await Backend.signupTxStatus(signupTxHash||'');
-        if (account?.address) {
-            storeAccountAddress(account.address);
-            setAccountAddress(account.address);
-            storeSignupTxHash(null);
-            setStep(STEP_4_WAITING_PASS);
-        }
-        if (!done) {
+        try {
+            let { done, success, account } = await Backend.signupTxStatus(signupTxHash||'');
+            if (account?.address) {
+                storeAccountAddress(account.address);
+                setAccountAddress(account.address);
+                storeSignupTxHash(null);
+                setStep(STEP_4_WAITING_PASS);
+            }
+            if (!done) {
+                setTimeout(handleSignupTxHash, 1000);
+            } else if (!success) {
+                setStep(STEP_2_WAITING_DEPLOY);
+            }
+        } catch(e) {
             setTimeout(handleSignupTxHash, 1000);
-        } else if (!success) {
-            setStep(STEP_2_WAITING_DEPLOY);
         }
     }
 

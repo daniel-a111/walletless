@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.9",
+  defaultNetwork: "polygon",
   // defaultNetwork: "localhost",
   networks: {
     hardhat: {
@@ -15,6 +16,11 @@ const config: HardhatUserConfig = {
     aws: {
       chainId: 31337,
       url: "http://100.24.205.203:8545"
+    },
+    polygon: {
+      chainId: 137,
+      url: "https://polygon-mainnet.g.alchemy.com/v2/UfvWQbLFTEBndoHds9JnDgwzUpepU1Z5",
+      accounts: ['dbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97']
     }
   },
   // paths: {

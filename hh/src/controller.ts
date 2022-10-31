@@ -5,8 +5,8 @@ import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_C
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
-const DEPLOYER_ADDRESS = '0x0b48aF34f4c854F5ae1A3D587da471FeA45bAD52';
-// const DEPLOYER_ADDRESS = '0x0C30e09d76F4B21DCE23541407B94753Bf786B6c'; // Matic
+// const DEPLOYER_ADDRESS = '0x0b48aF34f4c854F5ae1A3D587da471FeA45bAD52'; // aws
+const DEPLOYER_ADDRESS = '0xE80036EC7030dB81baf90140Ba23D80966019a95'; // Matic
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
 let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
