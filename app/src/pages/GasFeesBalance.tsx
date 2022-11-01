@@ -1,7 +1,7 @@
 import { createRef, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { getAccount, getAccountAddress, getFeesAccountAddress, getFeesAccountBalance, getGasFeesBalance, testPassword, transact } from "../account/Account";
+import { getAccount, getAccountAddress, getFeesAccountAddress, getFeesAccountBalance, getGasFeesBalance, testPassword } from "../account/Account";
 
 const GasFeesBalance = () => {
     let navigate = useNavigate();
@@ -43,7 +43,7 @@ const GasFeesBalance = () => {
     }
 
     const onClickAuth = async () => {
-        await transact(to, amount, data, authRef.current?.value||'');
+        // await transact(to, amount, data, authRef.current?.value||'');
     }
 
     const topupRef = createRef<HTMLInputElement>();

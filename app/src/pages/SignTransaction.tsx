@@ -1,7 +1,7 @@
 import { createRef, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { getAccountAddress, getBalance, transact } from "../account/Account";
+import { getAccountAddress, getBalance } from "../account/Account";
 
 const SignTransaction = () => {
     let navigate = useNavigate();
@@ -29,7 +29,7 @@ const SignTransaction = () => {
     const signRef = createRef<HTMLInputElement>();
 
     const onClickSign = async () => {
-        await transact(to, value, data, signRef.current?.value||'');
+        // await transact(to, value, data, signRef.current?.value||'');
     }
     return <>
         <div style={{ width: '800px', margin: '0 auto' }}>

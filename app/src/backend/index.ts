@@ -27,7 +27,7 @@ export const initTxStatus = async (hash: string): Promise<boolean> => {
 export const receipt = async (hash: string): Promise<string> => {
     const res = await axios.get(`${API_BASE_URL}/reciept`, { params: {hash} });
     console.log({ res });
-    return res.data.account?.address;
+    return res.data;
 }
 
 export const getFeesAccount = async (address?:string): Promise<string> => {
@@ -58,24 +58,17 @@ export const resetPasswords = async (address: string, cert: string, nonceSize: n
     return res.data.approval;
 }
 
-export const transact = async ({address, to, value, data, proof}: any) => {
-    const res = await axios.post(`${API_BASE_URL}/transact`, {
-        address, to, value, data, proof
-    });
-    return res.data.transaction;
-}
-
 export const transactPreset = async ({address, to, value, data, txCert}: any) => {
     const res = await axios.post(`${API_BASE_URL}/transact/preset`, {
         address, to, value, data, txCert
     });
-    return res.data.transaction;
+    return res.data;
 }
 
 export const expose = async ({address, proof}: any) => {
     const res = await axios.post(`${API_BASE_URL}/transact/expose`, {
         address, proof
     });
-    return res.data.transaction;
+    return res.data;
 }
 

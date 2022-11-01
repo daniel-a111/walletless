@@ -6,8 +6,8 @@ import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
 // const DEPLOYER_ADDRESS = '0x0b48aF34f4c854F5ae1A3D587da471FeA45bAD52'; // aws
-const DEPLOYER_ADDRESS = '0x77D7A923De822FC0C282cc29334e3B03B8701da2'; // MATIC
-// const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
+// const DEPLOYER_ADDRESS = '0x77D7A923De822FC0C282cc29334e3B03B8701da2'; // MATIC
+const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
 let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
@@ -185,7 +185,6 @@ const loadAccount = async (address: string) => {
     const wallet = TwoFactorWallet.attach(address);
 
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } })
-
     let feesAccountAddress = feesAccount?.address||FEES_ACCOUNT;
     let isActive = await wallet.active();
     let account: any = {
@@ -226,46 +225,10 @@ const getAccount = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const signTransactionAndProof = (tx: any, proof: string) => {
-    let { to, value, data }: any = tx;
-    data = data.substring(2);
-    let valueHex = value.toHexString().substring(2);
-    let vhl = valueHex.length;
-    for (let i = 0; i < 64-vhl; i++) {
-      valueHex = '0'+valueHex;
-    }
-    let txCert = ethers.utils.sha256(to+valueHex+data+proof);
-    return { txCert };
-}
 const loadWallet = async (address: string) => {
     const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
     return await TwoFactorWallet.attach(address);;
 }
-
-const transact = async (req: Request, res: Response, next: NextFunction) => {
-    let { address, to, value: valueStr, data, proof }: any = req.body;
-
-    const [owner] = await ethers.getSigners();
-    let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
-    if (!feesAccount) {
-        return res.status(500).json({ message: 'fee account missing or dont have balance' })
-    }
-    let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
-
-    const wallet = await loadWallet(address);
-    let value = ethers.utils.parseEther(valueStr);
-    const gweiValue = MIN_RGF;
-    if (to) {
-        let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-        let recordTr = await wallet.connect(addr).call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
-        console.log({ recordTr })    
-    }
-    let tr = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit: 500_000});
-    console.log({ tr });
-
-    return res.status(200).json({ account: await loadAccount(address) })
-}
-
 
 const transactPreset = async (req: Request, res: Response, next: NextFunction) => {
     let { address, to, value: valueStr, data, txCert }: any = req.body;
@@ -277,14 +240,31 @@ const transactPreset = async (req: Request, res: Response, next: NextFunction) =
     }
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
 
-    console.log({ address, to, valueStr });
+    console.log({valueStr})
+    // console.log({ address, to, valueStr });
     const wallet = await loadWallet(address);
     let value = ethers.utils.parseEther(valueStr);
-    const gweiValue = MIN_RGF;
-    let recordTr = await wallet.connect(addr).call(to, value, data, txCert, { value: gweiValue.mul(BigNumber.from(RGFM)) });
-    console.log({ recordTr })    
+    console.log({value})
 
-    return res.status(200).json({ account: await loadAccount(address) })
+    const gweiValue = MIN_RGF;
+    console.log({ value: gweiValue.mul(BigNumber.from(RGFM)) })
+    console.log({ balance: await addr.getBalance() });
+    console.log({ count: await addr.getTransactionCount() });
+
+    console.log();
+    console.log({ to, value, data, txCert });
+
+    const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
+    const rgfProvider = ManualRGFProvider.attach(await wallet.rgfProvider());
+    let fees = await rgfProvider.get(data.length-2);
+    fees = fees.mul(10_000_000);
+    console.log({ fees })
+    // let oldFees = gweiValue.mul(BigNumber.from(RGFM));
+    console.log({  })
+    let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+    console.log({ transaction });
+
+    return res.status(200).json({ transaction });
 }
 
 
@@ -299,9 +279,9 @@ const expose = async (req: Request, res: Response, next: NextFunction) => {
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
 
     const wallet = await loadWallet(address);
-    let tr = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit: 500_000});
-    console.log({ tr });
-    return res.status(200).json({ account: await loadAccount(address) })
+    let transaction = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit: 500_000, maxFeePerGas, maxPriorityFeePerGas });
+    console.log({ transaction });
+    return res.status(200).json({ transaction })
 }
 
 
@@ -312,7 +292,6 @@ export default {
     getGasFeeAccount,
     initAccount,
     getAccount,
-    transact,
     transactPreset,
     expose,
     signupTxStatus,

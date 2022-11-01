@@ -54,7 +54,6 @@ export const deployAccount = async () => {
 export const initAccount = async (password: string) => {
 
     let accountAddress = loadAccountAddress();
-    console.log({ accountAddress })
     if (accountAddress) {
         let { cert, nonceSize } = passwordsToCertsAndNonceAndAddress(password, accountAddress||'');
         initTxHash = await Backend.init(accountAddress||'', cert, nonceSize, feesAccount||'');
@@ -103,24 +102,22 @@ export const getGasFeesBalance = async (): Promise<number> => {
     return parseFloat(account?.gasFeesBalance||'0');
 }
 
-export const transact = async (to: string, value: string, data: string, password: string) => {
-    let account = await getAccount();
-    let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
-    if (proof) {
-        await Backend.transact({ address: accountAddress, to, value, data, proof });
-    } else {
-        // TODO handle errors
-    }
-}
-
-
 export const transactPreset = async (to: string, value: string, data: string, password: string) => {
     let account = await getAccount();
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
-    console.log({ proof })
+    let {txCert} = signTransactionAndProof({ to, value: ethers.utils.parseEther(value), data }, proof);
     if (proof) {
-        await Backend.transactPreset({ address: accountAddress, to, value, data });
+        return await Backend.transactPreset({ address: accountAddress, to, value, data, txCert });
     }
+}
+
+export const transactExpose = async (password: string) => {
+    let account = await getAccount();
+    let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
+    if (proof) {
+        return await Backend.expose({ address: accountAddress, proof });
+    }
+    return { transaction: undefined }
 }
 
 const signTransactionAndProof = (tx: any, proof: string) => {
