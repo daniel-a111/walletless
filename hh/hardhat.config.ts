@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.9",
-  defaultNetwork: "polygon",
+  defaultNetwork: "aws",
   // defaultNetwork: "localhost",
   networks: {
     hardhat: {

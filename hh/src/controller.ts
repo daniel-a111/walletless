@@ -5,9 +5,9 @@ import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_C
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
-// const DEPLOYER_ADDRESS = '0x0b48aF34f4c854F5ae1A3D587da471FeA45bAD52'; // aws
+const DEPLOYER_ADDRESS = '0x5D42EBdBBa61412295D7b0302d6F50aC449Ddb4F'; // aws
 // const DEPLOYER_ADDRESS = '0x77D7A923De822FC0C282cc29334e3B03B8701da2'; // MATIC
-const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
+// const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
 let maxFeePerGas = ethers.BigNumber.from(40000000000) // fallback to 40 gwei
@@ -32,15 +32,11 @@ const signupTxStatus = async (req: Request, res: Response, next: NextFunction) =
     const [owner] = await ethers.getSigners();
     try {
 
-        console.log({hash});
         let receipt = await owner.provider?.getTransactionReceipt(hash);
-        console.log({ receipt });
-
         if (!receipt?.logs || receipt.logs.length === 0) {
             return res.status(500).json({ message: 'no logs' })
         }
         let [{data}] = receipt?.logs||[];
-        console.log({data})
         let walletAddress = dataToAddress(data);
         let wallet = await loadWallet(walletAddress)
         return res.status(200).json({ success: true, done: true, account: { address: wallet.address } });
@@ -95,7 +91,6 @@ const tx = async (req: Request, res: Response, next: NextFunction) => {
     const [owner] = await ethers.getSigners();
 
     try {
-        console.log({hash});
         let tx = await owner.provider?.getTransaction(hash);
         return res.status(200).json({ tx });
 
@@ -120,9 +115,12 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
             return res.status(500).json({ message: 'fee account missing or dont have balance' })
         }
         let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
-        let tx = await deployer.connect(addr).createAccount({ gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+        console.log({ feesAddress });
+        // let tx = await deployer.connect(addr).createAccount({ gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+        let tx = await deployer.connect(addr).createAccount();
         return res.status(200).json({ tx });
     } catch(e: any) {
+        // throw e;
         return res.status(200).json({ error: e?.message||JSON.stringify(e)});
     }
 }
@@ -153,7 +151,8 @@ const initAccount = async (req: Request, res: Response, next: NextFunction) => {
         return res.status(500).json({ message: 'fee account missing or dont have balance' })
     }
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
-    let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+    // let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+    let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF);
     return res.status(200).json({ tx });
 }
 
@@ -215,7 +214,6 @@ const loadAccount = async (address: string) => {
 
 const getAccount = async (req: Request, res: Response, next: NextFunction) => {
     let { address }: any = req.query;
-
     try {
         const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
         const wallet = TwoFactorWallet.attach(address);
@@ -239,29 +237,13 @@ const transactPreset = async (req: Request, res: Response, next: NextFunction) =
         return res.status(500).json({ message: 'fee account missing or dont have balance' })
     }
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
-
-    console.log({valueStr})
-    // console.log({ address, to, valueStr });
     const wallet = await loadWallet(address);
     let value = ethers.utils.parseEther(valueStr);
-    console.log({value})
 
     const gweiValue = MIN_RGF;
-    console.log({ value: gweiValue.mul(BigNumber.from(RGFM)) })
-    console.log({ balance: await addr.getBalance() });
-    console.log({ count: await addr.getTransactionCount() });
-
-    console.log();
-    console.log({ to, value, data, txCert });
-
-    const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
-    const rgfProvider = ManualRGFProvider.attach(await wallet.rgfProvider());
-    let fees = await rgfProvider.get(data.length-2);
-    fees = fees.mul(10_000_000);
-    console.log({ fees })
-    // let oldFees = gweiValue.mul(BigNumber.from(RGFM));
-    console.log({  })
-    let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+    let fees = gweiValue.mul(BigNumber.from(RGFM));
+    // let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+    let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees });
     console.log({ transaction });
 
     return res.status(200).json({ transaction });
@@ -279,7 +261,7 @@ const expose = async (req: Request, res: Response, next: NextFunction) => {
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
 
     const wallet = await loadWallet(address);
-    let transaction = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit: 500_000, maxFeePerGas, maxPriorityFeePerGas });
+    let transaction = await wallet.connect(addr).expose('0x'+proof, 0);
     console.log({ transaction });
     return res.status(200).json({ transaction })
 }
