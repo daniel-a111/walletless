@@ -69,8 +69,8 @@ export const checkPending = async (password: string, pending: any[]): Promise<an
     }
 }
 
-const maxFeePerGas = 40000000000;
-const maxPriorityFeePerGas = 40000000000;
+const maxFeePerGas = 94812844862;
+const maxPriorityFeePerGas = 70000000000;
 
 export const deployAccount = async () => {
     signupTxHash = await Backend.signup(feesAccount||'', maxFeePerGas, maxPriorityFeePerGas);

@@ -5,9 +5,9 @@ import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_C
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
-const DEPLOYER_ADDRESS = '0x1AC4Bd4fcb3Cfc77eB176c710f422994C5E58171'; // aws
-// const DEPLOYER_ADDRESS = '0xf560A1a820EdC6D23E813A17C100a2C6b2FF41b2'; // MATIC
-// const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
+export const DEPLOYER_ADDRESS = '0x1AC4Bd4fcb3Cfc77eB176c710f422994C5E58171'; // aws
+// export const DEPLOYER_ADDRESS = '0xf560A1a820EdC6D23E813A17C100a2C6b2FF41b2'; // MATIC
+// export const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
 // let GWEI = 1000000000;
@@ -20,6 +20,7 @@ interface SignupBody {
     nonceSize: number;
     rgfProvider: string;
     feesAddress?: string;
+    gasLimit?: number,
     maxFeePerGas?: number;
     maxPriorityFeePerGas?: number;
 }
@@ -106,9 +107,11 @@ const tx = async (req: Request, res: Response, next: NextFunction) => {
 const signup = async (req: Request, res: Response, next: NextFunction) => {
 
     let { feesAddress, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
-    gasLimit = 2_500_000;
+    gasLimit = 3_500_000;
     maxFeePerGas = BigNumber.from(maxFeePerGas);
     maxPriorityFeePerGas = BigNumber.from(maxPriorityFeePerGas);
+
+    console.log({ m: maxFeePerGas.mul(BigNumber.from(gasLimit)), maxFeePerGas, maxPriorityFeePerGas })
 
     // TODO cheap deploy
     const [owner] = await ethers.getSigners();
@@ -134,7 +137,9 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 const initAccount = async (req: Request, res: Response, next: NextFunction) => {
 
     const [owner] = await ethers.getSigners();
-    let { address, cert, nonceSize, feesAddress, maxFeePerGas, maxPriorityFeePerGas }: SignupBody = req.body;
+    let { address, cert, nonceSize, feesAddress, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: SignupBody = req.body;
+    gasLimit = gasLimit||2_500_000;
+
     // const wallet = await loadWallet(address);
     const Depolyer = await ethers.getContractFactory(DEPOLYER_CONTRACT_NAME);
     const deployer = Depolyer.attach(DEPLOYER_ADDRESS);
@@ -158,7 +163,7 @@ const initAccount = async (req: Request, res: Response, next: NextFunction) => {
     }
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
     // let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
-    let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { maxFeePerGas, maxPriorityFeePerGas });
+    let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     return res.status(200).json({ tx });
 }
 
@@ -240,8 +245,8 @@ const loadRgfProvider = async (address: string) => {
 }
 
 const transactPreset = async (req: Request, res: Response, next: NextFunction) => {
-    let { address, to, value: valueStr, data, txCert, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
-
+    let { address, to, value: valueStr, data, txCert, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
+    gasLimit = gasLimit||2_500_000;
     const [owner] = await ethers.getSigners();
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
     if (!feesAccount) {
@@ -258,15 +263,15 @@ const transactPreset = async (req: Request, res: Response, next: NextFunction) =
     let fees = (await rgfProvider.get(data.length)).mul(100);
     console.log({ fees })
     // let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
-    let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, maxFeePerGas, maxPriorityFeePerGas });
+    let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     console.log({ transaction });
 
     return res.status(200).json({ transaction });
 }
 
 const expose = async (req: Request, res: Response, next: NextFunction) => {
-    let { address, proof, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
-
+    let { address, proof, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
+    gasLimit = gasLimit||2_500_000;
     const [owner] = await ethers.getSigners();
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
     if (!feesAccount) {
@@ -275,14 +280,15 @@ const expose = async (req: Request, res: Response, next: NextFunction) => {
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
 
     const wallet = await loadWallet(address);
-    let transaction = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit: 100_000, maxFeePerGas, maxPriorityFeePerGas });
+    let transaction = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     console.log({ transaction });
     return res.status(200).json({ transaction });
 }
 
 
 const exposeCont = async (req: Request, res: Response, next: NextFunction) => {
-    let { address, proof, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
+    let { address,gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
+    gasLimit = gasLimit||2_500_000;
 
     const [owner] = await ethers.getSigners();
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
@@ -292,7 +298,7 @@ const exposeCont = async (req: Request, res: Response, next: NextFunction) => {
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
 
     const wallet = await loadWallet(address);
-    let transaction = await wallet.connect(addr).exposeCont({ gasLimit: 1_000_000, maxFeePerGas, maxPriorityFeePerGas });
+    let transaction = await wallet.connect(addr).exposeCont({ gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     console.log({ transaction });
     return res.status(200).json({ transaction })
 }
