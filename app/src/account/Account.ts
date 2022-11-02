@@ -45,8 +45,35 @@ export const getAccountAddress = (): string|undefined => {
     return accountAddress;
 }
 
+export const pendingView = async (): Promise<any> => {
+    if (accountAddress) {
+        return await Backend.pendingView(accountAddress);
+    }
+}
+
+export const checkPending = async (password: string, pending: any[]): Promise<any> => {
+
+    let i = 0;
+    for (let {to, value, data, cert} of pending) {
+        console.log({cert});
+
+        let account = await getAccount();
+        console.log({ to, value, data })
+        console.log({password})
+        let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
+        let {txCert} = signTransactionAndProof({ to, value: ethers.utils.parseEther(value), data }, proof);
+        if (cert === txCert) {
+            return i;
+        }
+        i++;
+    }
+}
+
+const maxFeePerGas = 40000000000;
+const maxPriorityFeePerGas = 40000000000;
+
 export const deployAccount = async () => {
-    signupTxHash = await Backend.signup(feesAccount||'');
+    signupTxHash = await Backend.signup(feesAccount||'', maxFeePerGas, maxPriorityFeePerGas);
     storeSignupTxHash(signupTxHash);
     return signupTxHash;
 }
@@ -56,7 +83,7 @@ export const initAccount = async (password: string) => {
     let accountAddress = loadAccountAddress();
     if (accountAddress) {
         let { cert, nonceSize } = passwordsToCertsAndNonceAndAddress(password, accountAddress||'');
-        initTxHash = await Backend.init(accountAddress||'', cert, nonceSize, feesAccount||'');
+        initTxHash = await Backend.init(accountAddress||'', cert, nonceSize, feesAccount||'', maxFeePerGas, maxPriorityFeePerGas);
         return initTxHash;
     }
 }
@@ -102,20 +129,29 @@ export const getGasFeesBalance = async (): Promise<number> => {
     return parseFloat(account?.gasFeesBalance||'0');
 }
 
-export const transactPreset = async (to: string, value: string, data: string, password: string) => {
+export const transactPreset = async (to: string, value: string, data: string, password: string, maxFeePerGas: number, maxPriorityFeePerGas: number) => {
     let account = await getAccount();
+    console.log({ to, value, data })
+    console.log({password})
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
     let {txCert} = signTransactionAndProof({ to, value: ethers.utils.parseEther(value), data }, proof);
     if (proof) {
-        return await Backend.transactPreset({ address: accountAddress, to, value, data, txCert });
+        return await Backend.transactPreset({ address: accountAddress, to, value, data, txCert, maxFeePerGas, maxPriorityFeePerGas });
     }
 }
 
-export const transactExpose = async (password: string) => {
+export const transactExpose = async (password: string, maxFeePerGas: number, maxPriorityFeePerGas: number) => {
     let account = await getAccount();
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
     if (proof) {
-        return await Backend.expose({ address: accountAddress, proof });
+        return await Backend.expose({ address: accountAddress, proof, maxFeePerGas, maxPriorityFeePerGas });
+    }
+    return { transaction: undefined }
+}
+
+export const exposeCont = async (maxFeePerGas: number, maxPriorityFeePerGas: number) => {
+    if (accountAddress) {
+        return await Backend.exposeCont(accountAddress, maxFeePerGas, maxPriorityFeePerGas);
     }
     return { transaction: undefined }
 }
@@ -143,8 +179,8 @@ export const resetPassword = async (newPassword: string, oldPassword: string) =>
         let to = address;
         let value = ethers.utils.parseEther('0.0');
         let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-        await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert });
-        await Backend.expose({ address, proof });
+        await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert, maxFeePerGas, maxPriorityFeePerGas });
+        await Backend.expose({ address, proof, maxFeePerGas, maxPriorityFeePerGas });
     }
 }
 
@@ -159,8 +195,8 @@ export const setRGFParams = async (RGF: number, RGFM: number, MIN_RGF: number, p
         let to = providerAddress;
         let value = ethers.utils.parseEther('0.0');
         let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-        await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert });
-        await Backend.expose({ address, proof });
+        await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert, maxFeePerGas, maxPriorityFeePerGas });
+        await Backend.expose({ address, proof, maxFeePerGas, maxPriorityFeePerGas });
     }
 }
 
@@ -174,8 +210,8 @@ export const setRGFProvider = async (RGFProvider: string, password: string) => {
         let to = address;
         let value = ethers.utils.parseEther('0.0');
         let {txCert} = signTransactionAndProof({ to, data, value }, proof);
-        await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert });
-        await Backend.expose({ address, proof });
+        await Backend.transactPreset({ address, to, data, value: ethers.utils.formatEther(value), txCert, maxFeePerGas, maxPriorityFeePerGas });
+        await Backend.expose({ address, proof, maxFeePerGas, maxPriorityFeePerGas });
     }
 }
 

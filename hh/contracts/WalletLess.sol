@@ -12,8 +12,8 @@ contract WalletLess is StringsHandler {
     uint8 public pendingCounter;
     bool public active = false;
 
-    bool txProcessing;
-    uint8 processingCursor;
+    bool public txProcessing;
+    uint8 public processingCursor;
 
     IRGFProvider public rgfProvider;
 

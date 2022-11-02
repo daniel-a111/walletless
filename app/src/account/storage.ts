@@ -4,6 +4,7 @@ const SIGNUP_TX_HAS = 'signup-tx-hash';
 const INIT_TX_HAS = 'init-tx-hash';
 const PRESET_TX_HASH = 'preset-tx-hash';
 const EXPOSE_TX_HASH = 'expose-tx-hash';
+const TRANSACT = 'transact';
 
 const localGetter = (key: string) => {
     return localStorage.getItem(key) || null;
@@ -71,4 +72,18 @@ export const loadExposeTxHash = (): string|undefined => {
 
 export const storeExposeTxHash = (hash: string|null) => {
     localSetter(EXPOSE_TX_HASH, hash);
+}
+
+export interface Transact {
+    to: string;
+    value: number;
+    data?: string;
+}
+
+export const loadTransact = (): Transact|undefined => {
+    return localGetterObject(TRANSACT)||undefined;
+}
+
+export const storeTransact = (transact: Transact|undefined) => {
+    localSetterObject(TRANSACT, transact);
 }

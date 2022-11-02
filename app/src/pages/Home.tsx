@@ -1,13 +1,10 @@
 import { createRef, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { clearAccount, getAccountAddress, getBalance, getFeesAccountBalance, getGasFeesBalance, testPassword, transactExpose, transactPreset } from "../account/Account";
-import { topupData } from "../contracts";
-import { loadAccountAddress, loadExposeTxHash, loadPresetTxHash, storeExposeTxHash, storePresetTxHash } from "../account/storage";
-import * as Backend from "../backend";
-import config from "../config";
+import { clearAccount, getBalance, getFeesAccountBalance, getGasFeesBalance, testPassword } from "../account/Account";
+import { loadAccountAddress } from "../account/storage";
+import TransactForm from "../components/TransactForm";
 
-let pass: string|undefined;
 const Home = () => {
     let navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -31,109 +28,6 @@ const Home = () => {
             setGasFeesBalance(await getGasFeesBalance());
         }, 1000);
     }, [mount]);
-
-    const [auth, setAuth] = useState<boolean>(false);
-
-    const toRef = createRef<HTMLInputElement>();
-    const amountRef = createRef<HTMLInputElement>();
-    const dataRef = createRef<HTMLTextAreaElement>();
-    const authRef = createRef<HTMLInputElement>();
-
-    const [to, setTo] = useState<string>('');
-    const [amount, setAmount] = useState<string>('0');
-    const [data, setData] = useState<string>('0x');
-
-    const onClickSubmit = async () => {
-        setTo(toRef.current?.value||'');
-        setAmount(amountRef.current?.value||'0.');
-        if (isToWalletLess) {
-            setData( await topupData(toRef.current?.value||''));
-        } else {
-            setData(dataRef.current?.value||'0x');
-        }
-        setAuth(true);
-    }
-
-
-    const [presetTxHash, setPresetTxHash] = useState<string|undefined>(loadPresetTxHash());
-    const [exposeTxHash, setExposeTxHash] = useState<string|undefined>(loadExposeTxHash());
-    useEffect(() => {
-        storePresetTxHash(presetTxHash||null);
-    }, [presetTxHash]);
-    useEffect(() => {
-        storeExposeTxHash(exposeTxHash||null);
-    }, [exposeTxHash]);
-    const TRASACT_STEP_1_INIT = 'TRASACT_STEP_1_INIT';
-    const TRASACT_STEP_2_PRESET = 'TRASACT_STEP_2_PRESET';
-    const TRASACT_STEP_3_PRESET_DONE = 'TRASACT_STEP_3_PRESET_DONE';
-    const TRASACT_STEP_3_1_PRESET_FAILED = 'TRASACT_STEP_3_1_PRESET_FAILED';
-    const TRASACT_STEP_4_EXPOSE = 'TRASACT_STEP_4_EXPOSE';
-    const TRASACT_STEP_5_EXPOSE_DONE = 'TRASACT_STEP_5_EXPOSE_DONE';
-    const TRASACT_STEP_5_1_EXPOSE_FAILED = 'TRASACT_STEP_5_1_EXPOSE_FAILED';
-
-    let sv: string|undefined;
-    if (exposeTxHash) {
-        sv = TRASACT_STEP_4_EXPOSE;
-    } else if (presetTxHash) {
-        sv = TRASACT_STEP_3_PRESET_DONE;
-    }
-    const [step, setStep] = useState<string|undefined>(sv);
-
-    useEffect(() => {
-        (async () => {
-            await new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve(true);
-                }, 5000);
-            })
-            if (step === TRASACT_STEP_1_INIT) {
-                let { transaction }: any = await transactPreset(to, amount, data, authRef.current?.value||'');
-                setPresetTxHash(transaction.hash);
-                setStep(TRASACT_STEP_2_PRESET)
-            } else if (step === TRASACT_STEP_2_PRESET) {
-                let { receipt }: any = await Backend.receipt(presetTxHash||'');
-
-                while (!receipt) {
-                    await new Promise((resolve) => {
-                        setTimeout(() => {
-                            resolve(true);
-                        }, 1000);
-                    })
-                    let { receipt: r }: any = await Backend.receipt(presetTxHash||'');
-                    receipt = r;
-                }
-                if (receipt.status === 1) {
-                    setPresetTxHash(undefined);
-                    setStep(TRASACT_STEP_3_PRESET_DONE);
-                } else {
-                    // TODO failed
-                    setStep(TRASACT_STEP_3_1_PRESET_FAILED);
-                }
-
-            } else if (step === TRASACT_STEP_3_PRESET_DONE) {
-                let { transaction }: any = await transactExpose(pass||'');
-                setStep(TRASACT_STEP_4_EXPOSE);
-                setExposeTxHash(transaction.hash);
-            } else if (step === TRASACT_STEP_4_EXPOSE) {
-                let { receipt }: any = await Backend.receipt(exposeTxHash||'');
-                if (receipt) {
-                    if (receipt.status === 1) {
-                        setExposeTxHash(undefined);
-                        setStep(TRASACT_STEP_5_EXPOSE_DONE);
-                    } else {
-                        // TODO failed
-                        setStep(TRASACT_STEP_5_1_EXPOSE_FAILED);
-                    }
-                }
-            }
-        })();
-    }, [step]);
-
-    const onClickAuth = async () => {
-        pass = authRef.current?.value||'';
-        setStep(TRASACT_STEP_1_INIT);
-    }
-
     const topupRef = createRef<HTMLInputElement>();
 
     const [paymentGateway, setPaymentGateway] = useState<string>();
@@ -146,11 +40,6 @@ const Home = () => {
     const ACTION_OTHER = 3;
     const [action, setAction] = useState<number|null>();
 
-    const [isToContract, setToContract] = useState<boolean>(false);
-    const isToContractRef = createRef<HTMLInputElement>();
-    const [isToWalletLess, setToWalletless] = useState<boolean>(false);
-    const isToWalletLesRef = createRef<HTMLInputElement>();
-
     const [subAction, setSubAction] = useState<number|null>();
     const SUB_ACTION_TEST_PASSWORD = 4;
 
@@ -161,7 +50,6 @@ const Home = () => {
     }
 
     return <>
-        {/* <AppHeader /> */}
         <div className="app-window">
             {
                 accountAddress &&
@@ -206,54 +94,7 @@ const Home = () => {
                             }
                             {
                                 action === ACTION_TRANSFER &&
-                                <div>
-                                    {
-                                        !auth &&
-                                        <>
-                                            To <input type={'text'} ref={toRef} defaultValue={'0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'} /><br />
-                                            Amount <input type={'number'} ref={amountRef} /><br />
-                                            is wallet-less? <input ref={isToWalletLesRef} onChange={
-                                                () => setToWalletless(!!(isToWalletLesRef?.current?.checked)) } type={'checkbox'} /><br />
-                                            with data? <input ref={isToContractRef} onChange={
-                                                () => setToContract(!!(isToContractRef?.current?.checked)) } type={'checkbox'} /><br />
-                                            {
-                                                isToContract &&
-                                                <>
-                                                    Data <textarea ref={dataRef}></textarea><br />
-                                                </>
-                                            }
-                                            <button onClick={onClickSubmit}>submit</button>
-                                        </>
-                                    }
-                                    {
-                                        auth &&
-                                        <>
-                                            {presetTxHash &&
-                                                <>
-                                                    <div>
-                                                        {step === TRASACT_STEP_3_1_PRESET_FAILED &&
-                                                            <span>failed</span>
-                                                        }
-                                                        step 0/2 <a target={'_blank'} href={`${config.TX_INFO_URL.replaceAll('{hash}', presetTxHash)}`}>{formatAddress(presetTxHash)}</a>...
-                                                    </div>
-                                                </>
-                                            }
-                                            {exposeTxHash &&
-                                                <>
-                                                    <div>
-                                                        step 1/2 <a target={'_blank'} href={`${config.TX_INFO_URL.replaceAll('{hash}', exposeTxHash)}`}>{formatAddress(exposeTxHash)}</a>...
-                                                    </div>
-                                                </>
-                                            }
-                                            {
-                                                step === TRASACT_STEP_5_EXPOSE_DONE &&
-                                                <>done.</>
-                                            }
-                                            Password <input type={'password'} ref={authRef} /><br />
-                                            <button onClick={onClickAuth}>auth</button>
-                                        </>
-                                    }
-                                </div>
+                                <TransactForm />
                             }
                             {
                                 action === ACTION_PAYMENT_GATEWAY &&
