@@ -45,21 +45,10 @@ export const getAccountAddress = (): string|undefined => {
     return accountAddress;
 }
 
-export const pendingView = async (): Promise<any> => {
-    if (accountAddress) {
-        return await Backend.pendingView(accountAddress);
-    }
-}
-
 export const checkPending = async (password: string, pending: any[]): Promise<any> => {
-
     let i = 0;
     for (let {to, value, data, cert} of pending) {
-        console.log({cert});
-
         let account = await getAccount();
-        console.log({ to, value, data })
-        console.log({password})
         let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
         let {txCert} = signTransactionAndProof({ to, value: ethers.utils.parseEther(value), data }, proof);
         if (cert === txCert) {
@@ -99,9 +88,31 @@ export const signin = async (address: string, password: string): Promise<boolean
 }
 
 export const getAccount = async () => {
-    if (accountAddress) {
-        return await Backend.getAccount(accountAddress);
+    if (account) {
+        return account;
     }
+    else if (accountAddress) {
+        account = await Backend.getAccount(accountAddress);
+        return account;
+    }
+}
+
+export const getRGFProvider = async () => {
+    if (account) {
+        let rgf = await Backend.getRGFProvider(account.rgfProvider);
+        return rgf;
+    }
+}
+
+export interface FeesAccount {
+    address: string;
+    balance: string;
+}
+export const getFeesAccount = async (): Promise<FeesAccount> => {
+    let { feesAccount: address, balance }: any = await Backend.getFeesAccount(feesAccount);
+    storeFeesAccountAddress(address);
+    feesAccount = address;
+    return { address, balance };
 }
 export const getFeesAccountAddress = async (): Promise<string> => {
     if (!account?.feesAccount && !feesAccount) {
@@ -131,8 +142,6 @@ export const getGasFeesBalance = async (): Promise<number> => {
 
 export const transactPreset = async (to: string, value: string, data: string, password: string, maxFeePerGas: number, maxPriorityFeePerGas: number) => {
     let account = await getAccount();
-    console.log({ to, value, data })
-    console.log({password})
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
     let {txCert} = signTransactionAndProof({ to, value: ethers.utils.parseEther(value), data }, proof);
     if (proof) {
@@ -169,10 +178,10 @@ const signTransactionAndProof = (tx: any, proof: string) => {
 }
 
 export const resetPassword = async (newPassword: string, oldPassword: string) => {
+
     let account = await getAccount();
     let proof = passwordsAndAddressAndCertAndNonceToProof(oldPassword, account.address, account.cert, account.nonce, account.nonceSize);
     let {cert, nonceSize} = passwordsToCertsAndNonceAndAddress(newPassword, account.address);
-
     if (proof) {
         let data = await resetPasswordData(account.address, cert, nonceSize);
         let address = account.address;
@@ -185,10 +194,8 @@ export const resetPassword = async (newPassword: string, oldPassword: string) =>
 }
 
 export const setRGFParams = async (RGF: number, RGFM: number, MIN_RGF: number, password: string) => {
-    let account = await getAccount();
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
-    let providerAddress = account.RGFProvider.address;
-
+    let providerAddress = account.rgfProvider;
     if (proof) {
         let data = await setRGFParamData(providerAddress, RGF, RGFM, MIN_RGF);
         let address = account.address;
@@ -203,7 +210,6 @@ export const setRGFParams = async (RGF: number, RGFM: number, MIN_RGF: number, p
 export const setRGFProvider = async (RGFProvider: string, password: string) => {
     let account = await getAccount();
     let proof = passwordsAndAddressAndCertAndNonceToProof(password, account.address, account.cert, account.nonce, account.nonceSize);
-
     if (proof) {
         let data = await setRGFProviderData(account.address, RGFProvider);
         let address = account.address;
@@ -226,6 +232,6 @@ const updateAccount = async () => {
     if (accountAddress) {
         account = await getAccount()
     }
-    setTimeout(updateAccount, 2000);
+    setTimeout(updateAccount, 10000);
 };
 updateAccount();

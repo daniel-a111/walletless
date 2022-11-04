@@ -40,10 +40,9 @@ export const passwordToCertAndNonce = (password: string) => {
 
 
 export const passwordAndAddressToCertAndNonce = (password: string, address: string) => {
-    console.log(`${password}${address}`);
     let cert: any = sha256(`${password}${address}`);//.digest('hex');
     // console.log(`${cert}`);
-    let nonceSize = 1;
+    let nonceSize = 4000;
     for (let i = 0; i < nonceSize; i++) {
         cert = sha256(cert.digest());//.digest('hex');
     }

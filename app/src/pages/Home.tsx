@@ -1,9 +1,11 @@
-import { createRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { clearAccount, getBalance, getFeesAccountBalance, getGasFeesBalance, testPassword } from "../account/Account";
+import { clearAccount, getAccount, getBalance, getFeesAccountBalance } from "../account/Account";
 import { loadAccountAddress } from "../account/storage";
 import TransactForm from "../components/TransactForm";
+import MoreActionsMenu from "../components/MoreActionsMenu";
+import PaymentForm from "../components/PaymentForm";
 
 const Home = () => {
     let navigate = useNavigate();
@@ -14,26 +16,26 @@ const Home = () => {
     const [accountAddress, setAccountAddress] = useState<string|undefined>(loadAccountAddress());
     const [balance, setBalance] = useState<number>(0);
     const [gasFeesBalance, setGasFeesBalance] = useState<number>(0);
+
+    const loadBalances = async () => {
+        setBalance(await getBalance());
+        setGasFeesBalance(parseFloat(await getFeesAccountBalance()));
+        setTimeout(loadBalances, 3000);
+
+        let account = await getAccount();
+        if (!account.cert) {
+            navigate('/app/signup');
+        }
+    }
     useEffect(() => {
         (async () => {
             if (clear) {
                 clearAccount();
             }
             setAccountAddress(loadAccountAddress());
-            setBalance(await getBalance());
-            setGasFeesBalance(parseFloat(await getFeesAccountBalance()));
         })();
-        setInterval(async () => {
-            setBalance(await getBalance());
-            setGasFeesBalance(await getGasFeesBalance());
-        }, 1000);
+        loadBalances();
     }, [mount]);
-    const topupRef = createRef<HTMLInputElement>();
-
-    const [paymentGateway, setPaymentGateway] = useState<string>();
-    const onClickCreatePaymentGateway = async () => {
-        setPaymentGateway(`${process.env.PUBLIC_URL}/#/app/gateway?address=${accountAddress}&amount=${topupRef.current?.value||'0.0'}`);
-    }
 
     const ACTION_PAYMENT_GATEWAY = 1;
     const ACTION_TRANSFER = 2;
@@ -41,13 +43,6 @@ const Home = () => {
     const [action, setAction] = useState<number|null>();
 
     const [subAction, setSubAction] = useState<number|null>();
-    const SUB_ACTION_TEST_PASSWORD = 4;
-
-    const [testPassPassed, setTestPassPassed] = useState<boolean|undefined>();
-    const testPassRef = createRef<HTMLInputElement>();
-    const onClickTestPassword = async () => {
-        setTestPassPassed(await testPassword(testPassRef.current?.value||''));
-    }
 
     return <>
         <div className="app-window">
@@ -64,97 +59,49 @@ const Home = () => {
                         available gas fees: {formatBalancePrimitive(gasFeesBalance)}$
                     </div>
                     <div className="take-action-box">
-                        <>
-                            {!action &&
-                                <>
-                                    <span className="main-menu-title">What do you like to do?</span><br />
-                                    <span className="main-menu-item"
-                                        onClick={() => setAction(ACTION_PAYMENT_GATEWAY)}>create payment gateway</span>
-                                    <span className="main-menu-item"
-                                        onClick={() => setAction(ACTION_TRANSFER)}
-                                    >transfer</span>
-                                    <span
-                                        onClick={() => setAction(ACTION_OTHER)}
-                                    className="main-menu-item">more actions</span>
-                                </>
-                            }
-                            {
-                                action &&
-                                <>
-                                    {
-                                        !subAction &&
-                                        <span className="left" onClick={() => setAction(null)}>back</span>
-                                    }
-                                    {
-                                        subAction &&
-                                        <span className="left" onClick={() => setSubAction(null)}>back</span>
-                                    }
-                                    <br />
-                                </>
-                            }
-                            {
-                                action === ACTION_TRANSFER &&
-                                <TransactForm />
-                            }
-                            {
-                                action === ACTION_PAYMENT_GATEWAY &&
-                                <>
-                                    topup <input type={'number'} ref={topupRef} />
-                                    <button onClick={onClickCreatePaymentGateway}>create payment gateway</button>
-
-                                    {
-                                        paymentGateway &&
-                                        <>
-                                            <br /><br />
-                                            <input type={'text'} value={paymentGateway} />
-                                            <a href={paymentGateway}>go to</a>
-                                        </>
-                                    }
-                                </>
-                            }
-                            {
-                                action === ACTION_OTHER &&
-                                <>
-                                    {
-                                        !subAction &&
-                                        <>
-                                            <span
-                                                onClick={() => navigate(`/app/signin`)}
-                                                className="main-menu-item">Load account</span>
-                                            <span className="main-menu-item"
-                                                onClick={() => navigate(`/app/signup`)}
-                                            >Create account</span>
-                                            <span className="main-menu-item"
-                                                onClick={() => navigate(`/app/manage`)}
-                                            >account settings</span>
-                                            <span className="main-menu-item"
-                                                onClick={() => setSubAction(SUB_ACTION_TEST_PASSWORD)}
-                                            >Test password</span>
-                                        </>
-                                    }
-                                    {
-                                        subAction === SUB_ACTION_TEST_PASSWORD &&
-                                        <>
-                                            Address <input disabled={true} value={accountAddress} type={'text'} />
-                                            Password <input type={'password'} onKeyUp={() => setTestPassPassed(undefined)} ref={testPassRef} />
-                                            <button onClick={onClickTestPassword}>test</button>
-                                            {
-                                                testPassPassed === true &&
-                                                <>
-                                                    Passed!!
-                                                </>
-                                            }
-                                            {
-                                                testPassPassed === false &&
-                                                <>
-                                                    Wrong password :(
-                                                </>
-                                            }
-                                        </>
-                                    }
-                                </>
-                            }
-                        </>
+                        {
+                            <>
+                                {!action &&
+                                    <>
+                                        <span className="main-menu-title">What do you like to do?</span><br />
+                                        <span className="main-menu-item"
+                                            onClick={() => setAction(ACTION_PAYMENT_GATEWAY)}>create payment gateway</span>
+                                        <span className="main-menu-item"
+                                            onClick={() => setAction(ACTION_TRANSFER)}
+                                        >transfer</span>
+                                        <span
+                                            onClick={() => setAction(ACTION_OTHER)}
+                                        className="main-menu-item">more actions</span>
+                                    </>
+                                }
+                                {
+                                    action &&
+                                    <>
+                                        {
+                                            !subAction &&
+                                            <span className="left" onClick={() => setAction(null)}>back</span>
+                                        }
+                                        {
+                                            subAction &&
+                                            <span className="left" onClick={() => setSubAction(null)}>back</span>
+                                        }
+                                        <br />
+                                    </>
+                                }
+                                {
+                                    action === ACTION_TRANSFER &&
+                                    <TransactForm />
+                                }
+                                {
+                                    action === ACTION_PAYMENT_GATEWAY &&
+                                    <PaymentForm />
+                                }
+                                {
+                                    action === ACTION_OTHER &&
+                                    <MoreActionsMenu />
+                                }
+                            </>
+                        }
                     </div>
                 </>
             }

@@ -5,7 +5,7 @@ import { MANUAL_RGF_PROVIDER_ABI, NO_WALLET_ABI } from "./abis";
 export const resetPasswordData = async (address: string, cert: string, nonceSize: number) => {
     let c = new ethers.Contract(address, NO_WALLET_ABI);
     const iface = c.interface;
-    return iface.encodeFunctionData('resetPassword', ['0x'+cert, nonceSize]);
+    return iface.encodeFunctionData('resetPassword', [cert, nonceSize]);
 }
 
 export const setRGFProviderData = async (address: string, RGFProvider: string) => {

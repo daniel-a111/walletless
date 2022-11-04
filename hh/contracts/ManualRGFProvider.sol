@@ -1,6 +1,7 @@
 pragma solidity ^0.8.9;
 
 import "./IRGFProvider.sol";
+import "hardhat/console.sol";
 
 contract ManualRGFProvider is IRGFProvider {
 
@@ -26,9 +27,13 @@ contract ManualRGFProvider is IRGFProvider {
         MIN_RGF = MIN_RGF_;
     }
 
-    function get(uint length) external view returns(uint256) {
+    function get(uint length, uint attackCounter) external view returns(uint256) {
+        return getManual(length, attackCounter, tx.gasprice);
+    }
+
+    function getManual(uint length, uint attackCounter, uint gasprice) public view returns(uint256) {
         uint lengthAddition = length*50;
-        uint byGasPrice = tx.gasprice*RGF*RGFM+lengthAddition;
+        uint byGasPrice = (gasprice*RGF*RGFM)*(2**attackCounter)+lengthAddition;
         if (MIN_RGF+lengthAddition <= byGasPrice) {
             return byGasPrice;
         }

@@ -1,10 +1,20 @@
 import { createRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { deployAccount, getAccount, getAccountAddress, getFeesAccountAddress, getFeesAccountBalance, initAccount } from "../account/Account";
-import { loadFeesAccountAddress, loadInitTxHash, loadSignupTxHash, storeAccountAddress, storeInitTxHash, storeSignupTxHash } from "../account/storage";
+import { deployAccount, FeesAccount, getAccount, getAccountAddress, getFeesAccount, initAccount } from "../account/Account";
+import { loadInitTxHash, loadSignupTxHash, storeAccountAddress, storeInitTxHash, storeSignupTxHash } from "../account/storage";
 import * as Backend from "../backend";
 import config from "../config";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
+
+
+const STEP_1_GEN_FEES_ACCOUNT = 'STEP_1_GEN_FEES_ACCOUNT';
+const STEP_2_WAITING_DEPLOY = 'STEP_2_WAITING_DEPLOY';
+const STEP_3_PROCESSING_DEPLOY = 'STEP_3_PROCESSING_DEPLOY';
+const STEP_4_WAITING_PASS = 'STEP_4_WAITING_PASS';
+const STEP_5_WAITING_RE_PASS = 'STEP_5_WAITING_RE_PASS';
+const STEP_6_WAITING_INIT = 'STEP_6_WAITING_INIT';
+const STEP_7_PROCESSING_INIT = 'STEP_7_PROCESSING_INIT';
+const STEP_8_DONE = 'STEP_8_DONE';
 
 const Signup = () => {
 
@@ -13,27 +23,34 @@ const Signup = () => {
     const [accountAddress, setAccountAddress] = useState<string|undefined>(getAccountAddress());
     const [signupTxHash, setSignupTxHash] = useState<string|undefined>(loadSignupTxHash());
     const [initTxHash, setInitTxHash] = useState<string|undefined>(loadInitTxHash());
-    const [feesAccount, setFeesAccount] = useState<string|undefined>(loadFeesAccountAddress());
+    // const [feesAccount, setFeesAccount] = useState<FeesAccount|undefined>();
 
     const [feesAccountAddress, setFeesAccountAddress] = useState<string|undefined>();
     const [feesAccountBalance, setFeesAccountBalance] = useState<number|undefined>();
-
-    const STEP_1_GEN_FEES_ACCOUNT = 'STEP_1_GEN_FEES_ACCOUNT';
-    const STEP_2_WAITING_DEPLOY = 'STEP_2_WAITING_DEPLOY';
-    const STEP_3_PROCESSING_DEPLOY = 'STEP_3_PROCESSING_DEPLOY';
-    const STEP_4_WAITING_PASS = 'STEP_4_WAITING_PASS';
-    const STEP_5_WAITING_RE_PASS = 'STEP_5_WAITING_RE_PASS';
-    const STEP_6_WAITING_INIT = 'STEP_6_WAITING_INIT';
-    const STEP_7_PROCESSING_INIT = 'STEP_7_PROCESSING_INIT';
-    const STEP_8_DONE = 'STEP_8_DONE';
 
     const [mount] = useState<boolean>(true);
     const [step, setStep] = useState<string>(STEP_1_GEN_FEES_ACCOUNT);
     const [pass, setPass] = useState<string>();
 
+    const loadFeesAccount = async () => {
+        try {
+            let feesAccount = await getFeesAccount();
+            setFeesAccountAddress(feesAccount.address);
+            setFeesAccountBalance(parseFloat(feesAccount.balance));
+        } catch (e: any) {}
+        setTimeout(loadFeesAccount, 3000);
+    }
+    useEffect(() => {
+        loadFeesAccount();
+    }, [mount]);
+
+    const [isLoadingAccount, setLoadingAccount] = useState<boolean>(false);
     useEffect(() => {
         (async () => {
+            setLoadingAccount(true);
             let account = await getAccount();
+            setLoadingAccount(false);
+            let isFirstStep = false;
             if (account?.cert) {
                 setStep(STEP_8_DONE);
             } else if (accountAddress && initTxHash) {
@@ -42,15 +59,32 @@ const Signup = () => {
                 setStep(STEP_4_WAITING_PASS);
             } else if (signupTxHash) {
                 setStep(STEP_3_PROCESSING_DEPLOY);
-            } else if (feesAccount) {
+            } else if (feesAccountAddress) {
                 setStep(STEP_2_WAITING_DEPLOY);
             } else {
                 setStep(STEP_1_GEN_FEES_ACCOUNT);
+                isFirstStep = true;
             }
-            setFeesAccountAddress(await getFeesAccountAddress());
-            setFeesAccountBalance(parseFloat(await getFeesAccountBalance()));
+            let feesAccount = await getFeesAccount();
+            setFeesAccountAddress(feesAccount.address);
+            setFeesAccountBalance(parseFloat(feesAccount.balance));
+            if (isFirstStep) {
+                setStep(STEP_2_WAITING_DEPLOY);
+            }
         })();
-    }, [mount]);
+    }, [feesAccountAddress, accountAddress]);
+
+    useEffect(() => {
+        if (step === STEP_3_PROCESSING_DEPLOY) {
+            handleSignupTxHash();
+        } else if (step === STEP_7_PROCESSING_INIT) {
+            handleInitTxHash();
+        }
+    }, [step]);
+
+    const dataToAddress = (data: string) => {
+        return '0x'+data.substring(26);
+    }
 
     const handleSignupTxHash = async () => {
         if (!signupTxHash) {
@@ -91,10 +125,21 @@ const Signup = () => {
         }
     }, [step]);
 
+    const [message, setMessage] = useState<string>();
+    const [errorMessage, setErrorMessage] = useState<string|undefined>();
+    const [isDeployInProcess, setDeployInProcess] = useState<boolean>(false);
     const onStepDeployDone = async () => {
-        await deployAccount();
-        setSignupTxHash(loadSignupTxHash());
-        setStep(STEP_3_PROCESSING_DEPLOY);
+        try {
+            setDeployInProcess(true);
+            await deployAccount();
+            setStep(STEP_3_PROCESSING_DEPLOY);
+            setSignupTxHash(loadSignupTxHash());
+            setDeployInProcess(false);
+        } catch (error: any) {
+            setDeployInProcess(false);
+            setErrorMessage(error.message);
+            setStep(STEP_2_WAITING_DEPLOY);
+        }
     }
 
     const onStepPassDone = () => {
@@ -104,17 +149,21 @@ const Signup = () => {
         }
     }
 
+    const [isGeneratingAuthentication, setGeneratingAuthentication] = useState<boolean>(false);
     const onStepPassReDone = async () => {
         if (pass && pass === rePassRef.current?.value) {
-
-            console.log('INIT');
-
-            let txHash: string|undefined = await initAccount(pass);
-            if (txHash) {
-                storeInitTxHash(txHash);
-                setInitTxHash(txHash);
+            try {
+                setGeneratingAuthentication(true);
+                let txHash: string|undefined = await initAccount(pass);
                 setStep(STEP_7_PROCESSING_INIT);
+                if (txHash) {
+                    storeInitTxHash(txHash);
+                    setInitTxHash(txHash);
+                }
+            } catch (e: any) {
+                console.error(e);
             }
+            setGeneratingAuthentication(false);
         }
     }
 
@@ -132,23 +181,54 @@ const Signup = () => {
                     account auth init on tx <a target={'_blank'} href={`${config.TX_INFO_URL.replaceAll('{hash}', initTxHash)}`}>{formatAddress(initTxHash)}</a>...
                 </div>
             }
-            {feesAccountAddress && feesAccountBalance !== undefined &&
+            {/* {feesAccountAddress && feesAccountBalance !== undefined && */}
                 <div style={{marginBottom: '20px', lineHeight: '30px'}}>
-                    Fees Address: <span style={{fontWeight: '600'}} onClick={copyToClipboard} data-copy={feesAccountAddress}>{formatAddress(feesAccountAddress)}</span><br />
-                    Balance: <span>{formatBalancePrimitive(feesAccountBalance)}$</span>
+                    Fees Address: <span style={{fontWeight: '600'}} onClick={copyToClipboard} data-copy={feesAccountAddress}>{feesAccountAddress ? formatAddress(feesAccountAddress) : 'loading' }</span><br />
+                    Balance: <span>{feesAccountBalance!==undefined ? formatBalancePrimitive(feesAccountBalance)+'$' : 'loading...'}</span>
                 </div>
-            }
-
+            {/* } */}
             {
-                step === STEP_1_GEN_FEES_ACCOUNT &&
+                message &&
                 <>
-                    generating fees account...
+                    <div className="message">
+                        {message}
+                    </div>
+                </>
+            }
+            {
+                errorMessage &&
+                <>
+                    <div onClick={() => setErrorMessage(undefined)} className="error-message">
+                        {errorMessage}
+                    </div>
+                </>
+            }
+            {
+                isLoadingAccount &&
+                <>
+                    loading account...
+                </>
+            }
+            {
+                step === STEP_1_GEN_FEES_ACCOUNT && !isLoadingAccount &&
+                <>
+                    <button disabled={true}>Deploy</button>
                 </>
             }
             {
                 step === STEP_2_WAITING_DEPLOY &&
                 <>
-                    <button onClick={onStepDeployDone}>Deploy</button>
+                    {
+                        !isDeployInProcess &&
+                        <button onClick={onStepDeployDone}>Deploy</button>
+                    }
+                    {
+                        isDeployInProcess &&
+                        <>
+                            deploying...<br />
+                            <button disabled={true}>Deploy</button>
+                        </>
+                    }
                 </>
             }
             {

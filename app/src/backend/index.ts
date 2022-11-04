@@ -6,8 +6,11 @@ const API_BASE_URL = `${config.API_BASE_URL}/api`
 
 export const signup = async (feesAddress: string, maxFeePerGas: number, maxPriorityFeePerGas: number): Promise<string> => {
     const res = await axios.post(`${API_BASE_URL}/signup`, { feesAddress, maxFeePerGas, maxPriorityFeePerGas });
-    console.log({ res, maxFeePerGas, maxPriorityFeePerGas });
-    return res.data.tx.hash;
+    if (res.data?.tx?.hash) {
+        return res.data.tx.hash;
+    } else {
+        throw new Error(res.data.error);
+    }
 }
 
 export const signupTxStatus = async (hash: string): Promise<any> => {
@@ -49,6 +52,13 @@ export const getAccount = async (address: string): Promise<any> => {
     return res.data.account;
 }
 
+export const getRGFProvider = async (address: string): Promise<any> => {
+    const res = await axios.get(`${API_BASE_URL}/account/RGF`, {
+        params: { address }
+    });
+    return res.data;
+}
+
 export const resetPasswords = async (address: string, cert: string, nonceSize: number, proof: string, maxFeePerGas: number, maxPriorityFeePerGas: number) => {
     const res = await axios.post(`${API_BASE_URL}/password`, {
         address, cert, nonceSize, proof, maxFeePerGas, maxPriorityFeePerGas
@@ -76,11 +86,3 @@ export const exposeCont = async (address: string, maxFeePerGas: number, maxPrior
     });
     return res.data;
 }
-
-export const pendingView = async (address: string) => {
-    const res = await axios.get(`${API_BASE_URL}/pending`, {
-        params: {address}
-    });
-    return res.data;
-}
-

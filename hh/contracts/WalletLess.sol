@@ -2,27 +2,46 @@ pragma solidity ^0.8.9;
 
 import "./IRGFProvider.sol";
 import "./StringsHandler.sol";
+import "hardhat/console.sol";
+
+struct Transaction {
+    address to;
+    uint value;
+    bytes data;
+    bytes32 cert;
+}
+
+struct AccountState {
+    uint nonce;
+    bytes32 cert;
+    uint nonceSize;
+    Transaction[] pending;
+    uint8 pendingCounter;
+    uint pendingAttackCounter;
+    bool active;
+    bool txProcessing;
+    uint8 processingCursor;
+    IRGFProvider rgfProvider;
+}
 
 contract WalletLess is StringsHandler {
 
-    uint public nonce;
-    bytes32 public cert;
-    uint public nonceSize;
+    uint nonce;
+    bytes32 cert;
+    uint nonceSize;
     mapping(uint8 => Transaction) public pending;
-    uint8 public pendingCounter;
-    bool public active = false;
+    uint pendingAttackCounter;
+    uint8 pendingCounter;
+    bool active = false;
 
-    bool public txProcessing;
-    uint8 public processingCursor;
+    bool txProcessing;
+    uint8 processingCursor;
 
-    IRGFProvider public rgfProvider;
+    IRGFProvider rgfProvider;
 
-    struct Transaction {
-        address to;
-        uint value;
-        bytes data;
-        bytes32 cert;
-    }
+    error InsufficiantRGF(uint dataLength, uint expected, uint actual);
+
+    event RGFShouldBe(uint gasPrice, uint dataLength, uint expected, uint actual);
 
     event AddPending(uint i, uint nonce, address to, uint value, bytes data, bytes32 cert);
     event Expose(bytes32 proof, uint skip);
@@ -53,21 +72,45 @@ contract WalletLess is StringsHandler {
         }
         if (strEqual(sha256(byteProof), cert)) {
             nonce++;
+            if (pendingCounter == 255) {
+                pendingAttackCounter++;
+            }
             cert = proof;
             txProcessing = true;
-            return true;
         }
-        return false;
+        return txProcessing;
     }
 
     function call(address to, uint value, bytes memory data, bytes32 cert) public payable {
         require(!txProcessing, "cannot interupt processing state");
-        require(msg.value >= rgfProvider.get(data.length), "insufficiant RGF");
+        console.log("RGF %o", rgfProvider.get(data.length, pendingAttackCounter));
+        console.log("value %o", msg.value);
+        console.log(">=", msg.value >= rgfProvider.get(data.length, pendingAttackCounter));
+        require(msg.value >= rgfProvider.get(data.length, pendingAttackCounter), "insufficiant RGF");
         pending[pendingCounter] = Transaction({
             to: to, value: value, data: data, cert: cert
         });
         emit AddPending(pendingCounter, nonce, to, value, data, cert);
         pendingCounter++;
+    }
+
+    function getState() public view returns (AccountState memory) {
+        Transaction[] memory pending_ = new Transaction[](pendingCounter);
+        for (uint8 i = 0; i < pendingCounter; i++) {
+            pending_[i] = pending[i];
+        }
+        return AccountState({
+            nonce: nonce,
+            cert: cert,
+            nonceSize: nonceSize,
+            pending: pending_,
+            pendingAttackCounter: pendingAttackCounter,
+            pendingCounter: pendingCounter,
+            active: active,
+            txProcessing: txProcessing,
+            processingCursor: processingCursor,
+            rgfProvider: rgfProvider
+        });
     }
 
     function verifyRecord(uint8 i, bytes32 proof) public view returns(bool) {
@@ -107,8 +150,11 @@ contract WalletLess is StringsHandler {
             }
             Transaction memory tr = pending[i];
             if (_recordVerify(tr, cert)) {
-                emit SubmitTransaction(i, nonce, tr.to, tr.value, tr.data);
-                tr.to.call{value: tr.value}(bytes(tr.data));
+                if (tr.to != address(0)) {  // for skipping
+                    emit SubmitTransaction(i, nonce, tr.to, tr.value, tr.data);
+                    pendingAttackCounter = 0;
+                    tr.to.call{value: tr.value}(bytes(tr.data));
+                }
                 break;
             }
         }

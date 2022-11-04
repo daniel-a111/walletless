@@ -5,9 +5,9 @@ import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_C
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
-export const DEPLOYER_ADDRESS = '0x1AC4Bd4fcb3Cfc77eB176c710f422994C5E58171'; // aws
+export const DEPLOYER_ADDRESS = '0x9eBb49B2004C753f6Fb8b3181C224a8972f70528'; // aws
 // export const DEPLOYER_ADDRESS = '0xf560A1a820EdC6D23E813A17C100a2C6b2FF41b2'; // MATIC
-// export const DEPLOYER_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508'; // localhost
+// export const DEPLOYER_ADDRESS = '0x95bD8D42f30351685e96C62EDdc0d0613bf9a87A'; // localhost
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
 // let GWEI = 1000000000;
@@ -37,8 +37,14 @@ const signupTxStatus = async (req: Request, res: Response, next: NextFunction) =
     try {
 
         let receipt = await owner.provider?.getTransactionReceipt(hash);
+        if (!receipt) {
+            return res.status(200).json({ status: -1 });
+        }
+        if (receipt.status === 0) {
+            return res.status(200).json({ status: 0 });
+        }
         if (!receipt?.logs || receipt.logs.length === 0) {
-            return res.status(500).json({ message: 'no logs' })
+            return res.status(500).json({ status: receipt.status, accountAddress: null });
         }
         let [{data}] = receipt?.logs||[];
         let walletAddress = dataToAddress(data);
@@ -51,18 +57,14 @@ const signupTxStatus = async (req: Request, res: Response, next: NextFunction) =
 }
 
 const initTxStatus = async (req: Request, res: Response, next: NextFunction) => {
-
     let { hash }: any = req.query;
-
     // // TODO cheap deploy
     const [owner] = await ethers.getSigners();
-
     try {
         console.log({hash});
         let receipt = await owner.provider?.getTransactionReceipt(hash);
         console.log({ receipt });
         return res.status(200).json({ success: true });
-
     } catch(e: any) {
         // throw e;
         return res.status(200).json({ error: e?.message||JSON.stringify(e)});
@@ -180,48 +182,44 @@ const getGasFeeAccount = async (req: Request, res: Response, next: NextFunction)
             PK: addressData.getPrivateKeyString(),
         });
         await feesAccount.save();
-        return res.status(200).json({ feesAccount: feesAccount.address, balance: await owner.provider?.getBalance(feesAccount.address)||'0'})
+        return res.status(200).json({ feesAccount: feesAccount.address, balance: ethers.utils.formatEther(await owner.provider?.getBalance(feesAccount.address)||'0')})
     } else {
         return res.status(200).json({ feesAccount: address, balance: ethers.utils.formatEther(await owner.provider?.getBalance(address)||'0.0')})
-
     }
 }
 
-const loadAccount = async (address: string) => {
+const loadAccount = async (address: string, rgfDetailed: boolean=false) => {
 
-    console.log({address})
     const [owner, addr1, addr2, addr3] = await ethers.getSigners();
     const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
     const wallet = TwoFactorWallet.attach(address);
 
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } })
     let feesAccountAddress = feesAccount?.address||FEES_ACCOUNT;
-    let isActive = await wallet.active();
+    let { cert, nonceSize, nonce, active: isActive, pending: pendingArr, pendingCounter,
+        pendingAttackCounter, txProcessing, processingCursor, rgfProvider } = await wallet.getState();
+    let pending: any[] = [];
+    for (let i = 0; i < pendingArr.length; i++) {
+        let { to, value, data, cert } = pendingArr[i];
+        pending.push({ to, value, data, cert });
+    }
+
     let account: any = {
         address,
-        cert: isActive?(await wallet.cert()).substring(2):'',
-        nonce: parseInt(ethers.utils.formatUnits(await wallet.nonce(), 0)),
-        nonceSize: parseInt(ethers.utils.formatUnits(await wallet.nonceSize(), 0)),
+        cert,
+        nonce: parseInt(ethers.utils.formatUnits(nonce, 0)),
+        nonceSize: parseInt(ethers.utils.formatUnits(nonceSize, 0)),
         balance: ethers.utils.formatEther(await owner.provider?.getBalance(address)||'0'),
         feesAccount: feesAccount?.address||FEES_ACCOUNT,
         gasFeesBalance: ethers.utils.formatEther(await owner.provider?.getBalance(feesAccountAddress)||'0'),
+        isActive, pending, pendingCounter,
+        pendingAttackCounter: parseInt(ethers.utils.formatUnits(pendingAttackCounter, 0)), txProcessing, processingCursor,
+        rgfProvider
     }
 
-    try {
-        if (isActive) {
-            const RGFProviderAddress = await wallet.rgfProvider();
-            const ManualRGFProvider = await ethers.getContractFactory(RGF_MANUAL_CONTRACT_NAME);
-            const RGFProvider = ManualRGFProvider.attach(RGFProviderAddress);
-            account.RGFProvider = {
-                address: RGFProviderAddress,
-                RGF: parseInt(ethers.utils.formatUnits(await RGFProvider.RGF(), 0)),
-                RGFM: parseInt(ethers.utils.formatUnits(await RGFProvider.RGFM(), 0)),
-                MIN_RGF: parseInt(ethers.utils.formatUnits(await RGFProvider.MIN_RGF(), 0)),
-            };
-        }
-    } catch (e: any){}
     return account;
 }
+
 
 const getAccount = async (req: Request, res: Response, next: NextFunction) => {
     let { address }: any = req.query;
@@ -254,15 +252,14 @@ const transactPreset = async (req: Request, res: Response, next: NextFunction) =
     }
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
     const wallet = await loadWallet(address);
+    const state = await wallet.getState();
     let value = ethers.utils.parseEther(valueStr);
 
-    const gweiValue = MIN_RGF;
-    // let fees = gweiValue.mul(BigNumber.from(RGFM));
-    let rgfProviderAddress = await wallet.rgfProvider();
+    let rgfProviderAddress = state.rgfProvider;
     let rgfProvider = await loadRgfProvider(rgfProviderAddress);
-    let fees = (await rgfProvider.get(data.length)).mul(100);
+    let fees = (await rgfProvider.getManual(data.length/2-1, state.pendingAttackCounter, maxFeePerGas));
     console.log({ fees })
-    // let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+
     let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     console.log({ transaction });
 
@@ -303,20 +300,13 @@ const exposeCont = async (req: Request, res: Response, next: NextFunction) => {
     return res.status(200).json({ transaction })
 }
 
-const pendingView = async (req: Request, res: Response, next: NextFunction) => {
+const manualRGFProviderView = async (req: Request, res: Response, next: NextFunction) => {
     let { address }: any = req.query;
-
-    console.log({address})
-    const wallet = await loadWallet(address);
-    let pendingCounter = await wallet.pendingCounter();
-    let txProcessing = await wallet.txProcessing();
-    let processingCursor = await wallet.processingCursor();
-    let pending = [];
-    for (let i = 0; i < pendingCounter; i++) {
-        let [to, value, data, cert] = await wallet.pending(i);
-        pending.push({ idx: i, to, value: ethers.utils.formatEther(value), data, cert });
-    }
-    return res.status(200).json({ pendingCounter, pending, txProcessing, processingCursor })
+    const rgfProvider = await loadRgfProvider(address);
+    const RGF = parseInt(ethers.utils.formatUnits(await rgfProvider.RGF(), 0));
+    const RGFM = parseInt(ethers.utils.formatUnits(await rgfProvider.RGFM(), 0));
+    const MIN_RGF = parseInt(ethers.utils.formatUnits(await rgfProvider.MIN_RGF(), 0));
+    return res.status(200).json({ address, RGF, RGFM, MIN_RGF })
 }
 
 export default {
@@ -331,5 +321,5 @@ export default {
     exposeCont,
     signupTxStatus,
     initTxStatus,
-    pendingView
+    manualRGFProviderView
 };

@@ -134,7 +134,7 @@ export const passwordsAndAddressAndCertAndNonceToProof = (password: string, addr
     for (let i = nonce+1; i < nonceSize; i++) {
         p1 = sha256(p1);
     }
-    let h1 = sha256(p1).toString();
+    let h1 = '0x'+sha256(p1).toString();
     if (h1 === cert) {
         return p1.toString();
     }
