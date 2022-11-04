@@ -2,7 +2,6 @@ pragma solidity ^0.8.9;
 
 import "./IRGFProvider.sol";
 import "./StringsHandler.sol";
-import "hardhat/console.sol";
 
 struct Transaction {
     address to;
@@ -83,9 +82,6 @@ contract WalletLess is StringsHandler {
 
     function call(address to, uint value, bytes memory data, bytes32 cert) public payable {
         require(!txProcessing, "cannot interupt processing state");
-        console.log("RGF %o", rgfProvider.get(data.length, pendingAttackCounter));
-        console.log("value %o", msg.value);
-        console.log(">=", msg.value >= rgfProvider.get(data.length, pendingAttackCounter));
         require(msg.value >= rgfProvider.get(data.length, pendingAttackCounter), "insufficiant RGF");
         pending[pendingCounter] = Transaction({
             to: to, value: value, data: data, cert: cert

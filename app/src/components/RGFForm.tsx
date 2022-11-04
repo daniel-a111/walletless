@@ -1,6 +1,5 @@
 import { createRef, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { getAccount, getAccountAddress, getBalance, getGasFeesBalance, getRGFProvider, resetPassword, setRGFParams, setRGFProvider } from "../account/Account";
+import { getAccount, getRGFProvider, setRGFParams, setRGFProvider } from "../account/Account";
 
 const RGFForm = () => {
     const [account, setAccount] = useState<any>();

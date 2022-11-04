@@ -5,8 +5,8 @@ import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_C
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
 
-export const DEPLOYER_ADDRESS = '0x9eBb49B2004C753f6Fb8b3181C224a8972f70528'; // aws
-// export const DEPLOYER_ADDRESS = '0xf560A1a820EdC6D23E813A17C100a2C6b2FF41b2'; // MATIC
+// export const DEPLOYER_ADDRESS = '0x9eBb49B2004C753f6Fb8b3181C224a8972f70528'; // aws
+export const DEPLOYER_ADDRESS = '0x932A101a6f276C53fb2e86b767DaeD8D213Ba27E'; // MATIC
 // export const DEPLOYER_ADDRESS = '0x95bD8D42f30351685e96C62EDdc0d0613bf9a87A'; // localhost
 const FEES_ACCOUNT = '0xBa9f4022841A32C1a5c4C4B8891fD4519Ca8E5dD';
 
@@ -201,7 +201,7 @@ const loadAccount = async (address: string, rgfDetailed: boolean=false) => {
     let pending: any[] = [];
     for (let i = 0; i < pendingArr.length; i++) {
         let { to, value, data, cert } = pendingArr[i];
-        pending.push({ to, value, data, cert });
+        pending.push({ to, value: ethers.utils.formatEther(value), data, cert });
     }
 
     let account: any = {

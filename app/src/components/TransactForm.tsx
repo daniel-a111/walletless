@@ -1,28 +1,54 @@
 import { createRef, useEffect, useState } from "react";
-import { copyToClipboard, formatAddress } from "../utils";
-import { checkPending, exposeCont, getAccount, transactExpose, transactPreset } from "../account/Account";
+import { formatAddress } from "../utils";
+import { getAccount, transactExpose, transactPreset } from "../account/Account";
 import { topupData } from "../contracts";
 import { loadExposeTxHash, loadPresetTxHash, loadTransact, storeExposeTxHash, storePresetTxHash, storeTransact, Transact } from "../account/storage";
 import * as Backend from "../backend";
 import config from "../config";
+import GasForm from "./transact/GasForm";
+import ProceedTransfer from "./transact/ProceedTransfer";
+import NewTransactionForm from "./transact/NewTransactionForm";
+
+const TRASACT_STEP_0_CREATE = 'TRASACT_STEP_0_CREATE';
+const TRASACT_STEP_1_PRESET = 'TRASACT_STEP_1_PRESET';
+const TRASACT_STEP_2_PRESET_PROCESSING = 'TRASACT_STEP_2_PRESET_PROCESSING';
+const TRASACT_STEP_3_PRESET_DONE = 'TRASACT_STEP_3_PRESET_DONE';
+const TRASACT_STEP_3_1_PRESET_FAILED = 'TRASACT_STEP_3_1_PRESET_FAILED';
+const TRASACT_STEP_4_EXPOSE = 'TRASACT_STEP_4_EXPOSE';
+const TRASACT_STEP_5_EXPOSE_PROCESSING = 'TRASACT_STEP_5_EXPOSE_PROCESSING';
+const TRASACT_STEP_5_EXPOSE_DONE = 'TRASACT_STEP_5_EXPOSE_DONE';
+const TRASACT_STEP_5_1_EXPOSE_FAILED = 'TRASACT_STEP_5_1_EXPOSE_FAILED';
 
 const TransactForm = () => {
 
     const [mount] = useState<boolean>(true);
     const [auth, setAuth] = useState<boolean>(false);
+    const [to, setTo] = useState<string>('');
+    const [amount, setAmount] = useState<string>('0');
+    const [data, setData] = useState<string>('0x');
+    const [pass, setPass] = useState<string>('0x');
+
+    const [transact, setTransact] = useState<Transact|undefined>(loadTransact());
+    const [presetTxHash, setPresetTxHash] = useState<string|undefined>(loadPresetTxHash());
+    const [exposeTxHash, setExposeTxHash] = useState<string|undefined>(loadExposeTxHash());
+    const [txProcessing, setTxProcessing] = useState<boolean>(false);
+    const [processingCursor, setProcessingCursor] = useState<number>(0);
+    const [pending, setPending] = useState<any[]>([]);
+
+    let sv: string|undefined;
+    if (exposeTxHash) {
+        sv = TRASACT_STEP_5_EXPOSE_PROCESSING;
+    } else if (presetTxHash) {
+        sv = TRASACT_STEP_2_PRESET_PROCESSING;
+    } else if (transact) {
+        sv = TRASACT_STEP_1_PRESET;
+    }
+    const [step, setStep] = useState<string|undefined>(sv);
 
     const toRef = createRef<HTMLInputElement>();
     const amountRef = createRef<HTMLInputElement>();
     const dataRef = createRef<HTMLTextAreaElement>();
     const authRef = createRef<HTMLInputElement>();
-
-    const [to, setTo] = useState<string>('');
-    const [amount, setAmount] = useState<string>('0');
-    const [data, setData] = useState<string>('0x');
-    const [pass, setPass] = useState<string>('0x');
-    const [pending, setPending] = useState<any[]>([]);
-    const [txProcessing, setTxProcessing] = useState<boolean>(false);
-    const [processingCursor, setProcessingCursor] = useState<number>(0);
 
     const loadPendingView = async () => {
         
@@ -37,9 +63,11 @@ const TransactForm = () => {
     useEffect(() => {
         loadPendingView();
     }, [mount]);
+    useEffect(() => {
+        console.log({pending});
+    }, [pending]);
 
     const onClickSubmit = async () => {
-
         let to = toRef.current?.value||'';
         setTo(to);
         setAmount(amountRef.current?.value||'0.');
@@ -48,18 +76,8 @@ const TransactForm = () => {
         } else {
             setData(dataRef.current?.value||'0x');
         }
-        // setTransact({
-        //     to: toRef.current?.value||'',
-        //     value: parseFloat(amountRef.current?.value||'0.'),
-        //     data: isToWalletLess ? await topupData(toRef.current?.value||'') : (dataRef.current?.value||'0x')
-        // });
         setAuth(true);
     }
-
-
-    const [transact, setTransact] = useState<Transact|undefined>(loadTransact());
-    const [presetTxHash, setPresetTxHash] = useState<string|undefined>(loadPresetTxHash());
-    const [exposeTxHash, setExposeTxHash] = useState<string|undefined>(loadExposeTxHash());
 
     useEffect(() => {
         storeTransact(transact);
@@ -70,25 +88,6 @@ const TransactForm = () => {
     useEffect(() => {
         storeExposeTxHash(exposeTxHash||null);
     }, [exposeTxHash]);
-    const TRASACT_STEP_0_CREATE = 'TRASACT_STEP_0_CREATE';
-    const TRASACT_STEP_1_PRESET = 'TRASACT_STEP_1_PRESET';
-    const TRASACT_STEP_2_PRESET_PROCESSING = 'TRASACT_STEP_2_PRESET_PROCESSING';
-    const TRASACT_STEP_3_PRESET_DONE = 'TRASACT_STEP_3_PRESET_DONE';
-    const TRASACT_STEP_3_1_PRESET_FAILED = 'TRASACT_STEP_3_1_PRESET_FAILED';
-    const TRASACT_STEP_4_EXPOSE = 'TRASACT_STEP_4_EXPOSE';
-    const TRASACT_STEP_5_EXPOSE_PROCESSING = 'TRASACT_STEP_5_EXPOSE_PROCESSING';
-    const TRASACT_STEP_5_EXPOSE_DONE = 'TRASACT_STEP_5_EXPOSE_DONE';
-    const TRASACT_STEP_5_1_EXPOSE_FAILED = 'TRASACT_STEP_5_1_EXPOSE_FAILED';
-
-    let sv: string|undefined;
-    if (exposeTxHash) {
-        sv = TRASACT_STEP_5_EXPOSE_PROCESSING;
-    } else if (presetTxHash) {
-        sv = TRASACT_STEP_2_PRESET_PROCESSING;
-    } else if (transact) {
-        sv = TRASACT_STEP_1_PRESET;
-    }
-    const [step, setStep] = useState<string|undefined>(sv);
 
     useEffect(() => {
         console.log({to, data});
@@ -113,8 +112,8 @@ const TransactForm = () => {
                 console.log({to, data, amount, pass})
 
                 let { transaction }: any = await transactPreset(to, amount, data, pass||'',
-                    parseInt(maxFeePerGasRef.current?.value||'0')||maxFeePerGas,
-                    parseInt(maxFeePerGasRef.current?.value||'0')||maxFeePerGas);
+                    maxFeePerGas,
+                    maxPriorityFeePerGas);
                 console.log({transact});
                 setPresetTxHash(transaction.hash);
                 setStep(TRASACT_STEP_2_PRESET_PROCESSING)
@@ -138,8 +137,8 @@ const TransactForm = () => {
                     setStep(TRASACT_STEP_3_1_PRESET_FAILED);
                 }
             } else if (step === TRASACT_STEP_3_PRESET_DONE && pass) {
-                let txMaxFeePerGas = parseInt(maxFeePerGasRef.current?.value||'0')||maxFeePerGas;
-                let txMaxPriorityFeePerGas = parseInt(maxPriorityFeePerGasRef.current?.value||'0')||maxPriorityFeePerGas;
+                let txMaxFeePerGas = maxFeePerGas;
+                let txMaxPriorityFeePerGas = maxPriorityFeePerGas;
                 let { transaction }: any = await transactExpose(pass||'', txMaxFeePerGas, txMaxPriorityFeePerGas);
                 console.log({ transaction });
                 setStep(TRASACT_STEP_4_EXPOSE);
@@ -173,47 +172,13 @@ const TransactForm = () => {
     const [isToWalletLess, setToWalletless] = useState<boolean>(false);
     const isToWalletLesRef = createRef<HTMLInputElement>();
 
-    const [win, setWin] = useState<number>();
+    // const [win, setWin] = useState<number>();
     const [isLoadingPending, setLoadingPending] = useState<boolean>(false);
-    const [isCheckExecutionLoading, setCheckExecutionLoading] = useState<boolean>(false);
-    const onClickCheckExecution = async () => {
-        let pass = authRef.current?.value||'';
-        console.log({pass});
-        setCheckExecutionLoading(true);
-        try {
-            let win = await checkPending(pass, pending);
-            setCheckExecutionLoading(false);
-            setWin(win);
-        } catch (error: any) {
-            setCheckExecutionLoading(false);
-            throw error;
-        }
-    }
-    
-    const onClickExpose = async () => {
-        let pass = authRef.current?.value||'';
-        console.log({pass});
-        let expose = await transactExpose(pass,
-            parseInt(maxFeePerGasRef.current?.value||'0')||maxFeePerGas,
-            parseInt(maxFeePerGasRef.current?.value||'0')||maxFeePerGas);
-        console.log({expose});
-    }
-    
-    const onClickExposeCont = async () => {
-        let pass = authRef.current?.value||'';
-        console.log({pass});
-        let exposeContTx = await exposeCont(parseInt(maxFeePerGasRef.current?.value||'0')||maxFeePerGas,
-            parseInt(maxFeePerGasRef.current?.value||'0')||maxFeePerGas);
-        console.log({exposeContTx});
-    }
-    
-    const [editGas, setEditGas] = useState<boolean>(false);
+    // const [isCheckExecutionLoading, setCheckExecutionLoading] = useState<boolean>(false);
+
     
     const [maxFeePerGas, setMaxFeePerGas] = useState<number>(40000000000);
     const [maxPriorityFeePerGas, setMaxPriorityFeePerGas] = useState<number>(40000000000);
-
-    const maxFeePerGasRef = createRef<HTMLInputElement>();
-    const maxPriorityFeePerGasRef = createRef<HTMLInputElement>();
 
     const stageNewRef = createRef<HTMLInputElement>();
     const stageProceedRef = createRef<HTMLInputElement>();
@@ -269,79 +234,10 @@ const TransactForm = () => {
             {
                 stage === STAGE_PROCEED &&
                 <>
-                         {
-                        pending.length > 0 &&
-                        <div>
-                            {
-                                !txProcessing &&
-                                <>
-                                    <input ref={authRef} type={'password'} />
-                                    {win===undefined &&
-                                        <>
-                                            {
-                                                isCheckExecutionLoading &&
-                                                <>
-                                                    Checking...
-                                                </>
-                                            }
-                                            <button onClick={onClickCheckExecution}>check execution</button>
-                                        </>
-                                    }
-                                    {win!==undefined &&
-                                        <>
-                                            <button onClick={onClickExpose}>expose now</button>
-                                        </>
-                                    }
-                                    <table>
-                                        <tr>
-                                            <th>to</th>
-                                            <th>value</th>
-                                            <th>data</th>
-                                            <th>cert</th>
-                                        </tr>
-                                        {
-                                            pending.map((p:any) => {
-                                                return <>
-                                                    <tr className={win === p.idx ? 'win' : ''}>
-                                                        <td onClick={copyToClipboard} data-copy={p.to}>{formatAddress(p.to)}</td>
-                                                        <td>{p.value}</td>
-                                                        <td onClick={copyToClipboard} data-copy={p.data}>{formatAddress(p.data)}</td>
-                                                        <td onClick={copyToClipboard} data-copy={p.cert}>{formatAddress(p.cert)}</td>
-                                                    </tr>
-                                                </>;
-                                            })
-                                        }
-                                    </table>
-                                </>
-                            }
-                            {
-                                txProcessing &&
-                                <>
-                                    <table>
-                                        <tr>
-                                            <th>to</th>
-                                            <th>value</th>
-                                            <th>data</th>
-                                            <th>cert</th>
-                                        </tr>
-                                        {
-                                            [pending[processingCursor]].map((p:any) => {
-                                                return <>
-                                                    <tr className={'win'}>
-                                                        <td>{formatAddress(p.to)}</td>
-                                                        <td>{p.value}</td>
-                                                        <td>{formatAddress(p.data)}</td>
-                                                        <td>{formatAddress(p.cert)}</td>
-                                                    </tr>
-                                                </>;
-                                            })
-                                        }
-                                    </table>
-                                    <button onClick={onClickExposeCont}>keep processing</button>
-                                </>
-                            }
-                        </div>
-                    }
+                    <ProceedTransfer maxFeePerGas={maxFeePerGas}
+                                    maxPriorityFeePerGas={maxPriorityFeePerGas} pending={pending}
+                                    txProcessing={txProcessing} processingCurso={processingCursor}
+                                    />
                 </>
             }
             {
@@ -350,6 +246,7 @@ const TransactForm = () => {
                     {
                         !auth &&
                         <>
+                            <NewTransactionForm onClickSubmit />
                             To <input type={'text'} ref={toRef} defaultValue={'0x8E1fB6d99E3a9f3B54C498a74985D0b28F6ab6C9'} /><br />
                             Amount <input type={'number'} ref={amountRef} /><br />
                             is wallet-less? <input ref={isToWalletLesRef} onChange={
@@ -370,7 +267,7 @@ const TransactForm = () => {
                         <>
                             {
                                 step === TRASACT_STEP_5_EXPOSE_DONE &&
-                                <>done.</>
+                                <>done.<br /></>
                             }
                             Password <input type={'password'} ref={authRef} /><br />
                             <button onClick={onClickAuth}>auth</button>
@@ -378,30 +275,10 @@ const TransactForm = () => {
                     }
                 </>
             }
-            {
-                !editGas &&
-                <>
-                    <button onClick={() => setEditGas(true)}>edit gas</button><br />
-                </>
-            }
-            {
-                editGas &&
-                <>
-                    <div>
-                        <label><input type={'number'} ref={maxFeePerGasRef} defaultValue={maxFeePerGas} /></label><br />
-                        <label><input type={'number'} ref={maxPriorityFeePerGasRef} defaultValue={maxPriorityFeePerGas} /></label><br />
-                        <button style={{float: 'left'}} onClick={() => {
-                            if (maxFeePerGasRef.current?.value && parseInt(maxFeePerGasRef.current?.value)) {
-                                setMaxFeePerGas(parseInt(maxFeePerGasRef.current?.value));
-                            }
-                            if (maxPriorityFeePerGasRef.current?.value && parseInt(maxPriorityFeePerGasRef.current?.value)) {
-                                setMaxPriorityFeePerGas(parseInt(maxPriorityFeePerGasRef.current?.value));
-                            }
-                            setEditGas(false);
-                        }}>set and close</button>
-                    </div><br />
-                </>
-            }
+            <GasForm maxFeePerGas={maxFeePerGas}
+                setMaxFeePerGas={setMaxFeePerGas}
+                maxPriorityFeePerGas={maxPriorityFeePerGas}
+                setMaxPriorityFeePerGas={setMaxPriorityFeePerGas} />
         </div>
     </>;
 }

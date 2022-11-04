@@ -1,7 +1,6 @@
 pragma solidity ^0.8.9;
 
 import "./IRGFProvider.sol";
-import "hardhat/console.sol";
 
 contract ManualRGFProvider is IRGFProvider {
 
