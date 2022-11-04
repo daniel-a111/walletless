@@ -7,7 +7,6 @@ import * as Backend from "../backend";
 import config from "../config";
 import GasForm from "./transact/GasForm";
 import ProceedTransfer from "./transact/ProceedTransfer";
-import NewTransactionForm from "./transact/NewTransactionForm";
 
 const TRASACT_STEP_0_CREATE = 'TRASACT_STEP_0_CREATE';
 const TRASACT_STEP_1_PRESET = 'TRASACT_STEP_1_PRESET';
@@ -246,7 +245,6 @@ const TransactForm = () => {
                     {
                         !auth &&
                         <>
-                            <NewTransactionForm onClickSubmit />
                             To <input type={'text'} ref={toRef} defaultValue={'0x8E1fB6d99E3a9f3B54C498a74985D0b28F6ab6C9'} /><br />
                             Amount <input type={'number'} ref={amountRef} /><br />
                             is wallet-less? <input ref={isToWalletLesRef} onChange={
