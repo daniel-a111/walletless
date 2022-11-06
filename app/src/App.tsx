@@ -21,7 +21,7 @@ function App() {
           <div className='page-content'>
             <ReactNotifications />
             <Routes>
-              <Route path="/" element={<Intro />} />
+              <Route path="/" element={<Home />} />
               <Route path="/app/manage" element={<Account />} />
               <Route path="/app/signup" element={<Signup />} />
               <Route path="/app/signin" element={<Signin />} />
