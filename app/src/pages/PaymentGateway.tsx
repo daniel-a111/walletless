@@ -1,6 +1,7 @@
 import { createRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { topup } from "../account/Account";
+import ExperimentWarning from "../components/ExperimentWarning";
 import { copyToClipboard, formatAddress } from "../utils";
 
 const PaymentGateway = () => {
@@ -33,6 +34,7 @@ const PaymentGateway = () => {
     }
 
     return <>
+        <ExperimentWarning />
         <a className="connect-wallet-btn" onClick={onClickConnectMetaMask}>connect wallet</a>
         <div className="app-window">
             payment <input type={'number'} value={amount} ref={topupRef} /><br />
@@ -40,6 +42,9 @@ const PaymentGateway = () => {
             <button onClick={onClickTopup}>make payment</button>
         </div>
         <div className="clear"></div>
+        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
+            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
+        </div>
     </>;
 }
 export default PaymentGateway;

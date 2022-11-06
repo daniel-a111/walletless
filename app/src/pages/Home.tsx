@@ -6,6 +6,7 @@ import { loadAccountAddress } from "../account/storage";
 import TransactForm from "../components/TransactForm";
 import MoreActionsMenu from "../components/MoreActionsMenu";
 import PaymentForm from "../components/PaymentForm";
+import ExperimentWarning from "../components/ExperimentWarning";
 
 const Home = () => {
     let navigate = useNavigate();
@@ -45,6 +46,7 @@ const Home = () => {
     const [subAction, setSubAction] = useState<number|null>();
 
     return <>
+        <ExperimentWarning />
         <div className="app-window">
             {
                 accountAddress &&
@@ -118,6 +120,9 @@ const Home = () => {
             }
         </div>
         <div className="clear"></div>
+        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
+            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
+        </div>
     </>;
 }
 export default Home;

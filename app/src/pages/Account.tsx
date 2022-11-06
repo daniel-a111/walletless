@@ -4,6 +4,7 @@ import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils
 import { getAccount, getAccountAddress, getBalance, getGasFeesBalance, resetPassword, setRGFParams, setRGFProvider } from "../account/Account";
 import ResetPasswordForm from "../components/ResetPasswordForm";
 import RGFForm from "../components/RGFForm";
+import ExperimentWarning from "../components/ExperimentWarning";
 
 const Account = () => {
     let navigate = useNavigate();
@@ -28,9 +29,9 @@ const Account = () => {
     }, [mount]);
 
     return <>
-        {/* <AppHeader /> */}
+        <ExperimentWarning />
         <div className="app-window">
-            <Link style={{ float: 'left', display: 'inline-block', marginTop: '-60px' }} to={'/app'}>back</Link>
+            <Link style={{ float: 'left', display: 'inline-block', marginTop: '-24px' }} to={'/app'}>back</Link>
             {accountAddress &&
                 <>
                     you are connected to<br /><span style={{ fontSize: '24px', cursor: 'pointer' }}
@@ -55,6 +56,9 @@ const Account = () => {
             }
         </div>
         <div className="clear"></div>
+        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
+            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
+        </div>
     </>;
 }
 export default Account;

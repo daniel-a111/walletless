@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { deployAccount, FeesAccount, getAccount, getAccountAddress, getFeesAccount, initAccount } from "../account/Account";
 import { loadInitTxHash, loadSignupTxHash, storeAccountAddress, storeInitTxHash, storeSignupTxHash } from "../account/storage";
 import * as Backend from "../backend";
+import ExperimentWarning from "../components/ExperimentWarning";
 import config from "../config";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 
@@ -168,6 +169,7 @@ const Signup = () => {
     }
 
     return <>
+        <ExperimentWarning />
         <div className="app-window">
             {
                 signupTxHash && !initTxHash &&
@@ -273,6 +275,9 @@ const Signup = () => {
                 or<br />
                 <Link to={'/app/signin'}>sign-in</Link>
             </div>
+        </div>
+        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
+            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
         </div>
     </>;
 }

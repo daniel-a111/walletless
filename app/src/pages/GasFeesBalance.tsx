@@ -2,6 +2,7 @@ import { createRef, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 import { getAccount, getAccountAddress, getFeesAccountAddress, getFeesAccountBalance, getGasFeesBalance, testPassword } from "../account/Account";
+import ExperimentWarning from "../components/ExperimentWarning";
 
 const GasFeesBalance = () => {
     let navigate = useNavigate();
@@ -71,9 +72,9 @@ const GasFeesBalance = () => {
     }
 
     return <>
-        {/* <AppHeader /> */}
+        <ExperimentWarning />
         <div className="app-window">
-            <Link style={{ float: 'left', display: 'inline-block', marginTop: '-60px' }} to={'/app'}>back</Link>
+            <Link style={{ float: 'left', display: 'inline-block', marginTop: '-24px' }} to={'/app'}>back</Link>
             {
                 feesAccount &&
                 <>
@@ -202,6 +203,9 @@ const GasFeesBalance = () => {
             }
         </div>
         <div className="clear"></div>
+        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
+            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
+        </div>
     </>;
 }
 export default GasFeesBalance;

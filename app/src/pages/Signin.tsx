@@ -2,6 +2,7 @@ import { createRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAccountAddress, signin } from "../account/Account";
 import { storeAccountAddress } from "../account/storage";
+import ExperimentWarning from "../components/ExperimentWarning";
 import { formatAddress } from "../utils";
 
 const Signin = () => {
@@ -39,7 +40,7 @@ const Signin = () => {
     }
 
     return <>
-        {/* <AppHeader /> */}
+        <ExperimentWarning />
         <div className="app-window">
             {
                 accountAddress &&
@@ -71,7 +72,9 @@ const Signin = () => {
                 or<br />
                 <Link to={'/app/signup'}>sign-up</Link>
             </div>
-
+        </div>
+        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
+            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
         </div>
     </>;
 }

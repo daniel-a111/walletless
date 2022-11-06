@@ -2,6 +2,7 @@ import { createRef, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
 import { getAccountAddress, getBalance } from "../account/Account";
+import ExperimentWarning from "../components/ExperimentWarning";
 
 const SignTransaction = () => {
     let navigate = useNavigate();
@@ -32,6 +33,7 @@ const SignTransaction = () => {
         // await transact(to, value, data, signRef.current?.value||'');
     }
     return <>
+        <ExperimentWarning />
         <div style={{ width: '800px', margin: '0 auto' }}>
             {accountAddress &&
                 <>
@@ -62,6 +64,9 @@ const SignTransaction = () => {
 
         </div>
         <div className="clear"></div>
+        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
+            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
+        </div>
     </>;
 }
 export default SignTransaction;
