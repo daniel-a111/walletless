@@ -13,6 +13,8 @@ const Home = () => {
     const [searchParams] = useSearchParams();
     let clear = searchParams.get("clear");
 
+    const [symbol] = useState<string>('MATIC');
+
     const [mount] = useState<boolean>(false);
     const [accountAddress, setAccountAddress] = useState<string|undefined>(loadAccountAddress());
     const [balance, setBalance] = useState<number>(0);
@@ -55,10 +57,12 @@ const Home = () => {
                         data-copy={accountAddress}
                         onClick={copyToClipboard}>{formatAddress(accountAddress)}</span>
                     <div style={{ marginTop: '60px' }}>
-                        Total Balance<br /><span style={{ fontSize: '28px' }}>{formatBalancePrimitive(balance)}$</span>
+                        Total Balance<br /><span style={{ fontSize: '28px' }}>{formatBalancePrimitive(balance)}</span>
+                        <span style={{fontSize: '12px'}}>{symbol}</span>
                     </div>
                     <div onClick={() => navigate(`/gas-fees`)} style={{ marginTop: '60px' }}>
-                        available gas fees: {formatBalancePrimitive(gasFeesBalance)}$
+                        available gas fees: {formatBalancePrimitive(gasFeesBalance)}
+                        <span style={{fontSize: '10px'}}>{symbol}</span>
                     </div>
                     <div className="take-action-box">
                         {

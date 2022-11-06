@@ -10,6 +10,8 @@ const GasFeesBalance = () => {
     const [accountAddress] = useState<string|undefined>(getAccountAddress());
     const [feesAccount, setFeesAccount] = useState<string|undefined>();
     const [gasFeesBalance, setGasFeesBalance] = useState<number>(0.0);
+    const [symbol] = useState<string>('MATIC');
+
     useEffect(() => {
         (async () => {
 
@@ -82,7 +84,8 @@ const GasFeesBalance = () => {
                         data-copy={feesAccount}
                         onClick={copyToClipboard}>{formatAddress(feesAccount)}</span>
                     <div style={{ marginTop: '60px' }}>
-                        available gas fees: {formatBalancePrimitive(gasFeesBalance)}$
+                        available gas fees: {formatBalancePrimitive(gasFeesBalance)}
+                        <span style={{fontSize: '10px'}}>{symbol}</span>
                     </div>
                     <div className="take-action-box">
                         <>

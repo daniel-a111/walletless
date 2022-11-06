@@ -25,6 +25,7 @@ const Signup = () => {
     const [signupTxHash, setSignupTxHash] = useState<string|undefined>(loadSignupTxHash());
     const [initTxHash, setInitTxHash] = useState<string|undefined>(loadInitTxHash());
     // const [feesAccount, setFeesAccount] = useState<FeesAccount|undefined>();
+    const [symbol] = useState<string>('MATIC');
 
     const [feesAccountAddress, setFeesAccountAddress] = useState<string|undefined>();
     const [feesAccountBalance, setFeesAccountBalance] = useState<number|undefined>();
@@ -186,7 +187,19 @@ const Signup = () => {
             {/* {feesAccountAddress && feesAccountBalance !== undefined && */}
                 <div style={{marginBottom: '20px', lineHeight: '30px'}}>
                     Fees Address: <span style={{fontWeight: '600'}} onClick={copyToClipboard} data-copy={feesAccountAddress}>{feesAccountAddress ? formatAddress(feesAccountAddress) : 'loading' }</span><br />
-                    Balance: <span>{feesAccountBalance!==undefined ? formatBalancePrimitive(feesAccountBalance)+'$' : 'loading...'}</span>
+                    {
+                        feesAccountBalance &&
+                        <>
+                            Balance: <span>{formatBalancePrimitive(feesAccountBalance)}</span>
+                            <span style={{fontSize: '10px'}}>{symbol}</span>
+                        </>
+                    }
+                    {
+                        !feesAccountBalance &&
+                        <>
+                            Balance: <span>loading...</span>
+                        </>
+                    }
                 </div>
             {/* } */}
             {
