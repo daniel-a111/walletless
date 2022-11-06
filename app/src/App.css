@@ -69,6 +69,7 @@
 }
 
 .timelock-logo {
+  margin-left: 20px;
   /* background-image: url('../public/timelock/logo.png'); */
   /* position: absolute; */
   width: 155px;
