@@ -1,8 +1,15 @@
-import { createRef, useState } from "react";
+import { createRef, FC, useState } from "react";
 import { checkPending, exposeCont, transactExpose } from "../../account/Account";
 import PendingTable from "./../transact/PendingTable";
 
-const ProceedTransfer = ({ maxFeePerGas, maxPriorityFeePerGas, pending, txProcessing, processingCursor }: any) => {
+interface IProps {
+    gasMethod: string;
+    pending: any[];
+    txProcessing: boolean;
+    processingCursor: number;
+}
+
+const ProceedTransfer: FC<IProps>  = ({ gasMethod, pending, txProcessing, processingCursor }) => {
 
     const [mount] = useState<boolean>(true);
     const [win, setWin] = useState<number>();
@@ -12,15 +19,13 @@ const ProceedTransfer = ({ maxFeePerGas, maxPriorityFeePerGas, pending, txProces
     const onClickExposeCont = async () => {
         let pass = authRef.current?.value||'';
         console.log({pass});
-        let exposeContTx = await exposeCont(maxFeePerGas, maxPriorityFeePerGas);
+        let exposeContTx = await exposeCont();
         console.log({exposeContTx});
     }
     const onClickExpose = async () => {
         let pass = authRef.current?.value||'';
         console.log({pass});
-        let expose = await transactExpose(pass,
-            maxFeePerGas,
-            maxPriorityFeePerGas);
+        let expose = await transactExpose(pass);
         console.log({expose});
     }
     const onClickCheckExecution = async () => {

@@ -5,7 +5,7 @@ import { topupData } from "../contracts";
 import { loadExposeTxHash, loadPresetTxHash, loadTransact, storeExposeTxHash, storePresetTxHash, storeTransact, Transact } from "../account/storage";
 import * as Backend from "../backend";
 import config from "../config";
-import GasForm from "./transact/GasForm";
+import GasForm, { METHOD_STANDARD } from "./transact/GasForm";
 import ProceedTransfer from "./transact/ProceedTransfer";
 
 const TRASACT_STEP_0_CREATE = 'TRASACT_STEP_0_CREATE';
@@ -95,30 +95,17 @@ const TransactForm = () => {
         }
         (async () => {
             await new Promise((resolve) => {
-                console.log({start: new Date()});
-                for (let i = 1; i <= 4; i++) {
-                    setTimeout(() => {
-                        console.log({start: new Date(), left: (4-i)*5000});
-                    }, 5000*i);
-                }
                 setTimeout(() => {
                     resolve(true);
-                }, 20000);
+                }, 2000);
             })
-            console.log({step});
 
             if (step === TRASACT_STEP_1_PRESET) {
-                console.log({to, data, amount, pass})
-
-                let { transaction }: any = await transactPreset(to, amount, data, pass||'',
-                    maxFeePerGas,
-                    maxPriorityFeePerGas);
-                console.log({transact});
+                let { transaction }: any = await transactPreset(to, amount, data, pass||'');
                 setPresetTxHash(transaction.hash);
                 setStep(TRASACT_STEP_2_PRESET_PROCESSING)
             } else if (step === TRASACT_STEP_2_PRESET_PROCESSING) {
                 let { receipt }: any = await Backend.receipt(presetTxHash||'');
-
                 while (!receipt) {
                     await new Promise((resolve) => {
                         setTimeout(() => {
@@ -136,24 +123,30 @@ const TransactForm = () => {
                     setStep(TRASACT_STEP_3_1_PRESET_FAILED);
                 }
             } else if (step === TRASACT_STEP_3_PRESET_DONE && pass) {
-                let txMaxFeePerGas = maxFeePerGas;
-                let txMaxPriorityFeePerGas = maxPriorityFeePerGas;
-                let { transaction }: any = await transactExpose(pass||'', txMaxFeePerGas, txMaxPriorityFeePerGas);
-                console.log({ transaction });
                 setStep(TRASACT_STEP_4_EXPOSE);
-                setExposeTxHash(transaction.hash);
             } else if (step === TRASACT_STEP_4_EXPOSE) {
+                let { transaction }: any = await transactExpose(pass||'');
+                setExposeTxHash(transaction.hash);
+                setStep(TRASACT_STEP_5_EXPOSE_PROCESSING);
+            } else if (step === TRASACT_STEP_5_EXPOSE_PROCESSING) {
                 let { receipt }: any = await Backend.receipt(exposeTxHash||'');
-                if (receipt) {
-                    if (receipt.status === 1) {
-                        setExposeTxHash(undefined);
-                        setStep(TRASACT_STEP_5_EXPOSE_DONE);
-                    } else {
-                        // TODO failed
-                        setStep(TRASACT_STEP_5_1_EXPOSE_FAILED);
-                    }
+                while (!receipt) {
+                    await new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve(true);
+                        }, 1000);
+                    })
+                    let { receipt: r }: any = await Backend.receipt(exposeTxHash||'');
+                    receipt = r;
                 }
-            }
+                if (receipt.status === 1) {
+                    setExposeTxHash(undefined);
+                    setStep(TRASACT_STEP_5_EXPOSE_DONE);
+                } else {
+                    // TODO failed
+                    setStep(TRASACT_STEP_5_1_EXPOSE_FAILED);
+                }
+            } else if ( step === TRASACT_STEP_5_EXPOSE_DONE ) {}
         })();
     }, [step]);
 
@@ -171,14 +164,7 @@ const TransactForm = () => {
     const [isToWalletLess, setToWalletless] = useState<boolean>(false);
     const isToWalletLesRef = createRef<HTMLInputElement>();
 
-    // const [win, setWin] = useState<number>();
     const [isLoadingPending, setLoadingPending] = useState<boolean>(false);
-    // const [isCheckExecutionLoading, setCheckExecutionLoading] = useState<boolean>(false);
-
-    
-    const [maxFeePerGas, setMaxFeePerGas] = useState<number>(40000000000);
-    const [maxPriorityFeePerGas, setMaxPriorityFeePerGas] = useState<number>(40000000000);
-
     const stageNewRef = createRef<HTMLInputElement>();
     const stageProceedRef = createRef<HTMLInputElement>();
 
@@ -191,6 +177,11 @@ const TransactForm = () => {
         } else {
             setStage(STAGE_PROCEED);
         }
+    }
+
+    const [gasMethod, setGasMethod] = useState<string>(METHOD_STANDARD);
+    const onPickMethod = (method: string) => {
+        setGasMethod(method);
     }
 
     return <>
@@ -233,9 +224,9 @@ const TransactForm = () => {
             {
                 stage === STAGE_PROCEED &&
                 <>
-                    <ProceedTransfer maxFeePerGas={maxFeePerGas}
-                                    maxPriorityFeePerGas={maxPriorityFeePerGas} pending={pending}
-                                    txProcessing={txProcessing} processingCurso={processingCursor}
+                    <ProceedTransfer gasMethod={gasMethod}
+                                    pending={pending}
+                                    txProcessing={txProcessing} processingCursor={processingCursor}
                                     />
                 </>
             }
@@ -245,8 +236,8 @@ const TransactForm = () => {
                     {
                         !auth &&
                         <>
-                            To <input type={'text'} ref={toRef} defaultValue={'0x8E1fB6d99E3a9f3B54C498a74985D0b28F6ab6C9'} /><br />
-                            Amount <input type={'number'} ref={amountRef} /><br />
+                            To <input type={'text'} ref={toRef} placeholder={'for example 0x8E1fB6...'} /><br />
+                            Amount <input type={'number'} ref={amountRef} placeholder={'0.0'} /><br />
                             is wallet-less? <input ref={isToWalletLesRef} onChange={
                                 () => setToWalletless(!!(isToWalletLesRef?.current?.checked)) } type={'checkbox'} /><br />
                             with data? <input ref={isToContractRef} onChange={
@@ -273,10 +264,7 @@ const TransactForm = () => {
                     }
                 </>
             }
-            <GasForm maxFeePerGas={maxFeePerGas}
-                setMaxFeePerGas={setMaxFeePerGas}
-                maxPriorityFeePerGas={maxPriorityFeePerGas}
-                setMaxPriorityFeePerGas={setMaxPriorityFeePerGas} />
+            {/* <GasForm onPickMethod={onPickMethod} /> */}
         </div>
     </>;
 }

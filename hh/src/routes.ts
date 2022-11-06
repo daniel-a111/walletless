@@ -15,5 +15,6 @@ router.post('/api/fees-account', controller.getGasFeeAccount);
 
 router.get('/api/tx/status/singup', controller.signupTxStatus);
 router.get('/api/tx/status/init', controller.initTxStatus);
+router.get('/api/gas', controller.gasMarketView);
 
 export = router;

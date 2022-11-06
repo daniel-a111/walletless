@@ -61,7 +61,7 @@ const Nav = () => {
     return <div className="nav">
         <div className="content">
             <div className="timelock-logo">WalletLess</div>
-            <a className="btn-launch-app" onClick={onClickConnectMetaMask}>Launch App</a>
+            <a className="btn-launch-app">Fees Info</a>
             <a>Donate</a>
             <a>About</a>
             <a>Learn</a>

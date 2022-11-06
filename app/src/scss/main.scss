@@ -133,3 +133,23 @@ tr.win td {
     margin: 0 0 18px;
     border: solid 2px #d68282;
 }
+
+.connect-wallet-btn {
+    display: inline-block;
+    width: 142px;
+    margin-top: 22px;
+    height: 46px;
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 44px;
+    text-align: center;
+    color: #000000;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAAuCAYAAAAssSu+AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFkSURBVHgB7d3NUcJQFIbh70QKoAVLsAYdl2oHDh1IBUgFQgeUEF054IISKIEOzFpmuN7rDBsHlJBvx/sskpn8rd65J1kllN3epdE29BRSX0ALSWqqpNn8LYaRQ3pJOSQBHaSkcdzcp09WJBg0FSHBpF8JMCEm2BATbIgJNsQEG2KCDTHBhphgQ0ywISbYEBNsiAk2xAQbYoINMcGGmGBDTLAhJtgQE2yICTbEBBtigg0xwYaYYENMsCEm2BATbIgJNsQEG2KCDTHBIknLnoCOQlpfhAasTOiiSaHxV+jqvY41KxNOkiMqY21QItodIya0UkbaNo+0jzqWv88RE45VRtp0UcfzoQuICf8LzTbScFlH89dlxISDyntR3o33jbR9iAn7/Hyl5YgmbW6qyu8KBOwkTTehy7YhFb08D6f5ASPhrJWRlr/UhovXWOlEUTbXD2mSl6hH8beCc7SKPNLmddTq6BvzAUqzt/oCLgAAAABJRU5ErkJggg==);
+    background-repeat: no-repeat;
+    color: #fff;
+    display: inline-block;
+    margin-bottom: 30px;
+    margin-top: -13px;
+}

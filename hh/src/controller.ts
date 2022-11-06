@@ -4,6 +4,7 @@ import { BigNumber } from "ethers";
 import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, MIN_RGF, RGF, RGFM, RGF_MANUAL_CONTRACT_NAME } from './constants';
 import ethWallet from'ethereumjs-wallet';
 import { FeesAccount } from './models';
+import axios from 'axios';
 
 // export const DEPLOYER_ADDRESS = '0x9eBb49B2004C753f6Fb8b3181C224a8972f70528'; // aws
 export const DEPLOYER_ADDRESS = '0x932A101a6f276C53fb2e86b767DaeD8D213Ba27E'; // MATIC
@@ -108,12 +109,8 @@ const tx = async (req: Request, res: Response, next: NextFunction) => {
 
 const signup = async (req: Request, res: Response, next: NextFunction) => {
 
-    let { feesAddress, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
-    gasLimit = 3_500_000;
-    maxFeePerGas = BigNumber.from(maxFeePerGas);
-    maxPriorityFeePerGas = BigNumber.from(maxPriorityFeePerGas);
-
-    console.log({ m: maxFeePerGas.mul(BigNumber.from(gasLimit)), maxFeePerGas, maxPriorityFeePerGas })
+    let { feesAddress, gasLimit }: any = req.body;
+    gasLimit = gasLimit||3_500_000;
 
     // TODO cheap deploy
     const [owner] = await ethers.getSigners();
@@ -126,8 +123,8 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
             return res.status(500).json({ message: 'fee account missing or dont have balance' })
         }
         let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
-        console.log({ feesAddress });
-        // let tx = await deployer.connect(addr).createAccount({ gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
+        let maxFeePerGas, maxPriorityFeePerGas;
+        maxFeePerGas = maxPriorityFeePerGas = getMaxFeePerGas();
         let tx = await deployer.connect(addr).createAccount({ gasLimit, maxFeePerGas, maxPriorityFeePerGas });
         return res.status(200).json({ tx });
     } catch(e: any) {
@@ -139,10 +136,9 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 const initAccount = async (req: Request, res: Response, next: NextFunction) => {
 
     const [owner] = await ethers.getSigners();
-    let { address, cert, nonceSize, feesAddress, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: SignupBody = req.body;
-    gasLimit = gasLimit||2_500_000;
+    let { address, cert, nonceSize, feesAddress }: SignupBody = req.body;
+    let gasLimit = 2_500_000;
 
-    // const wallet = await loadWallet(address);
     const Depolyer = await ethers.getContractFactory(DEPOLYER_CONTRACT_NAME);
     const deployer = Depolyer.attach(DEPLOYER_ADDRESS);
 
@@ -158,19 +154,19 @@ const initAccount = async (req: Request, res: Response, next: NextFunction) => {
     }
     feesAccount.walletAddress = address;
     await feesAccount.save()
-
-
     if (!feesAccount) {
         return res.status(500).json({ message: 'fee account missing or dont have balance' })
     }
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
+
+    let maxFeePerGas, maxPriorityFeePerGas;
+    maxFeePerGas = maxPriorityFeePerGas = getMaxFeePerGas();
     // let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { gasLimit: 2_500_000, maxFeePerGas, maxPriorityFeePerGas });
     let tx = await deployer.connect(addr).initAcount(address, cert, nonceSize, RGF, RGFM, MIN_RGF, { gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     return res.status(200).json({ tx });
 }
 
 const getGasFeeAccount = async (req: Request, res: Response, next: NextFunction) => {
-
     const [owner] = await ethers.getSigners();
     let { address } = req.body;
     if (!address) {
@@ -242,9 +238,32 @@ const loadRgfProvider = async (address: string) => {
     return TwoFactorWallet.attach(address);;
 }
 
+const getMaxFeePerGas = () => {
+    if (!gasMarket) {
+        throw Error("oracke is not initiated yet");
+    }
+    return ethers.utils.parseUnits(gasMarket.rapid, 9);
+}
+
+const gasMethodToMaxFeePerGas = (gasMethod: string) => {
+    if (!gasMarket) {
+        throw Error("oracke is not initiated yet");
+    }
+    if (gasMethod === 'standard') {
+        return BigNumber.from(gasMarket?.standard);
+    } else if (gasMethod === 'fast') {
+        return BigNumber.from(gasMarket?.fast);
+    } else if (gasMethod === 'rapid') {
+        return BigNumber.from(gasMarket?.rapid);
+    } else {
+        throw Error("Gas Method must be chosen");
+    }
+}
+
 const transactPreset = async (req: Request, res: Response, next: NextFunction) => {
-    let { address, to, value: valueStr, data, txCert, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
-    gasLimit = gasLimit||2_500_000;
+    let { address, to, value: valueStr, data, txCert }: any = req.body;
+    let gasLimit = 2_500_000+10*(data.length);
+
     const [owner] = await ethers.getSigners();
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
     if (!feesAccount) {
@@ -255,20 +274,29 @@ const transactPreset = async (req: Request, res: Response, next: NextFunction) =
     const state = await wallet.getState();
     let value = ethers.utils.parseEther(valueStr);
 
+    let maxFeePerGas = getMaxFeePerGas();
+    let maxPriorityFeePerGas = maxFeePerGas;
+
     let rgfProviderAddress = state.rgfProvider;
     let rgfProvider = await loadRgfProvider(rgfProviderAddress);
     let fees = (await rgfProvider.getManual(data.length/2-1, state.pendingAttackCounter, maxFeePerGas));
     console.log({ fees })
 
-    let transaction = await wallet.connect(addr).call(to, value, data, txCert, { value: fees, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
+    let nonce = await wallet.provider.getTransactionCount(addr.address);
+    let transaction = await wallet.connect(addr).call(to, value, data, txCert, { nonce, value: fees, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
+    console.log(await wallet.provider.getTransactionCount(addr.address));
+    // let transaction = {};
     console.log({ transaction });
 
     return res.status(200).json({ transaction });
 }
 
 const expose = async (req: Request, res: Response, next: NextFunction) => {
-    let { address, proof, gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
+    let { address, proof, gasLimit }: any = req.body;
     gasLimit = gasLimit||2_500_000;
+    let maxFeePerGas = getMaxFeePerGas();
+    let maxPriorityFeePerGas = maxFeePerGas;
+
     const [owner] = await ethers.getSigners();
     let feesAccount: any = await FeesAccount.findOne({ where: { walletAddress: address } });
     if (!feesAccount) {
@@ -277,14 +305,15 @@ const expose = async (req: Request, res: Response, next: NextFunction) => {
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
 
     const wallet = await loadWallet(address);
-    let transaction = await wallet.connect(addr).expose('0x'+proof, 0, { gasLimit, maxFeePerGas, maxPriorityFeePerGas });
+    let nonce = await wallet.provider.getTransactionCount(addr.address);
+    let transaction = await wallet.connect(addr).expose('0x'+proof, 0, { nonce, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     console.log({ transaction });
     return res.status(200).json({ transaction });
 }
 
 
 const exposeCont = async (req: Request, res: Response, next: NextFunction) => {
-    let { address,gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any = req.body;
+    let { address,gasLimit }: any = req.body;
     gasLimit = gasLimit||2_500_000;
 
     const [owner] = await ethers.getSigners();
@@ -295,7 +324,10 @@ const exposeCont = async (req: Request, res: Response, next: NextFunction) => {
     let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
 
     const wallet = await loadWallet(address);
-    let transaction = await wallet.connect(addr).exposeCont({ gasLimit, maxFeePerGas, maxPriorityFeePerGas });
+    let nonce = await wallet.provider.getTransactionCount(addr.address);
+    let maxFeePerGas = getMaxFeePerGas();
+    let maxPriorityFeePerGas = maxFeePerGas;
+    let transaction = await wallet.connect(addr).exposeCont({ nonce, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
     console.log({ transaction });
     return res.status(200).json({ transaction })
 }
@@ -309,6 +341,28 @@ const manualRGFProviderView = async (req: Request, res: Response, next: NextFunc
     return res.status(200).json({ address, RGF, RGFM, MIN_RGF })
 }
 
+const gasMarketView = async (req: Request, res: Response, next: NextFunction) => {
+    console.log({gasMarket});
+    return res.status(200).json({ gasMarket })
+}
+interface GasMarket {
+    standard: string;
+    fast: string;
+    rapid: string;
+}
+let gasMarket: GasMarket|undefined;
+const gasOracle = async () => {
+    let URL = 'https://gpoly.blockscan.com/gasapi.ashx?apikey=key&method=gasoracle';
+    let res = await axios.get(URL);
+    let data = res.data;
+    if (data.message === 'OK') {
+        let {SafeGasPrice: standard, ProposeGasPrice: fast, FastGasPrice: rapid }: any = data?.result;
+        gasMarket = { standard, fast, rapid };
+    }
+    setTimeout(gasOracle, 1000);
+}
+gasOracle();
+
 export default {
     receipt,
     tx,
@@ -321,5 +375,6 @@ export default {
     exposeCont,
     signupTxStatus,
     initTxStatus,
-    manualRGFProviderView
+    manualRGFProviderView,
+    gasMarketView
 };

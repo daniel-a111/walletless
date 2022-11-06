@@ -15,8 +15,25 @@ const PaymentGateway = () => {
         await topup(address, parseFloat(topupRef.current?.value||'0.'));
     }
 
+    async function onClickConnectMetaMask() {
+        const { ethereum }: any = window;
+        try {
+            if (!ethereum) {
+                window.open('https://metamask.io/', '_blank');
+                return;
+            }
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            connected(accounts);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    const connected = (accounts: any) => {
+        console.log(accounts);
+    }
+
     return <>
-        {/* <AppHeader /> */}
+        <a className="connect-wallet-btn" onClick={onClickConnectMetaMask}>connect wallet</a>
         <div className="app-window">
             payment <input type={'number'} value={amount} ref={topupRef} /><br />
             to <span onClick={copyToClipboard} data-copy={address}>{formatAddress(address)}</span><br />
