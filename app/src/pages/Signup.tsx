@@ -53,7 +53,7 @@ const Signup = () => {
             let account = await getAccount();
             setLoadingAccount(false);
             let isFirstStep = false;
-            if (account?.cert) {
+            if (account?.isActive) {
                 setStep(STEP_8_DONE);
             } else if (accountAddress && initTxHash) {
                 setStep(STEP_7_PROCESSING_INIT);
