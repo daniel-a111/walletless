@@ -188,14 +188,14 @@ const Signup = () => {
                 <div style={{marginBottom: '20px', lineHeight: '30px'}}>
                     Fees Address: <span style={{fontWeight: '600'}} onClick={copyToClipboard} data-copy={feesAccountAddress}>{feesAccountAddress ? formatAddress(feesAccountAddress) : 'loading' }</span><br />
                     {
-                        feesAccountBalance &&
+                        feesAccountBalance!==undefined &&
                         <>
                             Balance: <span>{formatBalancePrimitive(feesAccountBalance)}</span>
                             <span style={{fontSize: '10px'}}>{symbol}</span>
                         </>
                     }
                     {
-                        !feesAccountBalance &&
+                        feesAccountBalance===undefined &&
                         <>
                             Balance: <span>loading...</span>
                         </>

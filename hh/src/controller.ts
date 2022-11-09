@@ -125,6 +125,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
         let addr = new ethers.Wallet(feesAccount.PK, owner.provider);
         let maxFeePerGas, maxPriorityFeePerGas;
         maxFeePerGas = maxPriorityFeePerGas = getMaxFeePerGas();
+        console.log(addr.address);
         let tx = await deployer.connect(addr).createAccount({ gasLimit, maxFeePerGas, maxPriorityFeePerGas });
         return res.status(200).json({ tx });
     } catch(e: any) {
@@ -199,6 +200,9 @@ const loadAccount = async (address: string, rgfDetailed: boolean=false) => {
         let { to, value, data, cert } = pendingArr[i];
         pending.push({ to, value: ethers.utils.formatEther(value), data, cert });
     }
+
+    // let ethBalance = await owner.provider?.getBalance(address);
+    // let usdBalance = ethBalance?.mul(BigNumber.from(ma))
 
     let account: any = {
         address,
@@ -349,6 +353,7 @@ interface GasMarket {
     standard: string;
     fast: string;
     rapid: string;
+    usdPrice: string;
 }
 let gasMarket: GasMarket|undefined;
 const gasOracle = async () => {
@@ -356,8 +361,9 @@ const gasOracle = async () => {
     let res = await axios.get(URL);
     let data = res.data;
     if (data.message === 'OK') {
-        let {SafeGasPrice: standard, ProposeGasPrice: fast, FastGasPrice: rapid }: any = data?.result;
-        gasMarket = { standard, fast, rapid };
+        // console.log({data});
+        let {SafeGasPrice: standard, ProposeGasPrice: fast, FastGasPrice: rapid, UsdPrice: usdPrice }: any = data?.result;
+        gasMarket = { standard, fast, rapid, usdPrice };
     }
     setTimeout(gasOracle, 1000);
 }
