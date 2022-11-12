@@ -2,6 +2,8 @@ import { BigNumber, ethers } from "ethers";
 import moment from "moment";
 import sha256 from 'crypto-js/sha256';
 
+const DIFFICULTY = 10_000_000;
+
 export const copyToClipboard = (e: any) => {
     /* Copy the text inside the text field */
     if (navigator.clipboard) {
@@ -126,7 +128,7 @@ export const passwordsToCertsAndNonceAndAddress = (password: string, address: st
     for (let i = 0; i < 4000; i++) {
         cert = sha256(cert);
     }
-    return { cert: '0x'+cert.toString(), nonceSize: 4000 }
+    return { cert: '0x'+cert.toString(), nonceSize: DIFFICULTY }
 }
 
 export const passwordsAndAddressAndCertAndNonceToProof = (password: string, address: string, cert: string, nonce: number, nonceSize: number) => {
