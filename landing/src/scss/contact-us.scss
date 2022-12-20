@@ -1,0 +1,157 @@
+.contact-us {
+    .nav {
+        margin: -10px -10px 56px -10px;
+        padding-top: 78px;
+        background: #FFFFFF;
+        box-sizing: border-box;
+        .logo {
+            font-family: 'Termina';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 25.2046px;
+            line-height: 33px;
+            text-align: center;
+            color: #273A7A;
+        }
+
+        .b2e-logo {
+            display: block;
+            margin: 6px auto 0;
+            width: 122px;
+            height: 55px;
+            background-image: url('../../public/b2e-logo.svg');
+        }
+        .b2e-powered {
+            padding-top: 6px;
+            display: block;
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 300;
+            font-size: 14.7042px;
+            line-height: 24px;
+            text-align: center;
+            color: #000000;
+        }
+    }
+
+    .chat-icon-dark {
+        float: left;
+        margin: 7px 14px auto 14px;
+        width: 20px;
+        height: 20px;
+        background-image: url('../../public/icons/chat-icon-dark.svg');
+    }
+    .social {
+        width: 200px;
+        margin: 60px auto;
+    }
+    .twitter-icon,
+    .telegram-icon,
+    .email-icon {
+        margin: 0 auto;
+        display: block;
+        width: 77px;
+        height: 33px;
+    }
+    .twitter-icon {
+        float: left;
+        width: 33px;
+        height: 28px;
+        background-image: url('../../public/icons/twitter-icon.svg');
+    }
+    .telegram-icon {
+        margin: 0 auto;
+        width: 33px;
+        height: 33px;
+        background-image: url('../../public/icons/telegram-icon.svg');
+    }
+    .email-icon {
+        float: right;
+        width: 33px;
+        height: 28px;
+        background-image: url('../../public/icons/email-icon.svg');
+    }
+
+    p.receive-email-description {
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 150%;
+        text-align: left;
+        color: #000000;
+        
+    }
+    .bell-big-icon {
+        margin: 0 auto;
+        display: block;
+        height: 86px;
+        width: 77px;
+        background-image: url('../../public/icons/bell-icon-big.svg');
+    }
+
+    textarea {
+        margin-bottom: 20px;
+        text-align: left;
+        box-sizing: border-box;
+        padding: 10px 20px;
+        width: 100%;
+        height: 160px;
+        gap: 24px;
+        border: 2px solid #6687FC;
+        border-radius: 5px;
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 300;
+        font-size: 20px;
+        line-height: 24px;
+        text-align: left;
+        color: rgba(0, 0, 0, 0.51);
+        flex: none;
+        order: 0;
+        flex-grow: 0;
+    }
+    input[type=text] {
+        margin-bottom: 20px;
+        padding: 10px 20px;
+        gap: 24px;
+
+        border: 2px solid #6687FC;
+        border-radius: 5px;
+
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 300;
+        font-size: 20px;
+        line-height: 24px;
+        text-align: left;
+        color: rgba(0, 0, 0, 0.51);
+        flex: none;
+        order: 0;
+        flex-grow: 0;
+        &::placeholder {
+
+        }
+    }
+
+    .privacy-email-description {
+        margin: 20px auto;
+        width: 300px;
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 300;
+        font-size: 18px;
+        line-height: 150%;
+        color: #000000;
+    }
+
+    .privacy-email-icon {
+        float: left;
+        display: block;
+        margin: 5px auto -26px -18px;
+        height: 19px;
+        width: 18px;
+        background-image: url('../../public/icons/privacy-icon.svg');
+    }
+    
+}

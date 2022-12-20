@@ -1,0 +1,131 @@
+.overview {
+    .nav {
+        margin: -10px -10px 56px -10px;
+        padding-top: 92px;
+        height: 143px;
+        background: #FFFFFF;
+        box-shadow: 0px 0px 7px rgb(0 0 0 / 17%);
+        box-sizing: border-box;
+        .logo {
+            font-family: 'Termina';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 25.2046px;
+            line-height: 33px;
+            text-align: center;
+            color: #6687FC;
+        }
+    }
+
+    h1 {
+        margin-top: 0;
+        margin-bottom: 40px;
+        height: auto;
+        width: 350px;
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 500;
+        font-size: 24px;
+        line-height: 150%;
+        letter-spacing: -0.15px;
+        color: #000000;
+    }
+
+    p {
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 150%;
+        color: #000000;
+        text-align: left;
+        margin: 6px 38px 80px;
+    }
+
+    .learn-more-link {
+        float: right;
+        margin-top: 22px;
+        display: inline-block;
+        text-decoration: none;
+        width: 130px;
+        height: 30px;
+        left: 11px;
+        top: 3px;
+
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 150%;
+        /* identical to box height, or 30px */
+
+        text-align: center;
+
+        color: #0F43FB;
+    }
+    .our-platform-header { 
+        height: 101px;
+        padding-top: 1px;
+        background: #5D80FB;
+        h1, p {
+            color: #FFFFFF;
+        }
+        h1 {
+            margin-top: 26px;
+            margin-bottom: 0;
+        }
+        p {
+            font-size: 10px;
+        }
+    }
+    .interface-description {
+        background: #ECEDF0;
+    }
+
+    .screenshots {
+        height: 396px;
+        &.screenshots-1 {
+            background-position-y: -47px;
+            background-image: url('../../public/screens-1.svg');
+        }
+        &.screenshots-2 {
+            background-position-y: 0;
+            background-image: url('../../public/screens-2.svg');
+        }
+    }
+
+    .back-icon {
+        position: absolute;
+        top: 80px;
+        left: 12px;
+        display: block;
+        height: 25px;
+        width: 15px;
+    }
+}
+
+.chat-icon {
+    margin: 4px 27px 0 -47px;
+    float: right;
+    display: inline-block;
+    height: 21px;
+    width: 21px;
+    background-image: url('../../public/icons/chat-icon.svg');
+}
+.platform-icon {
+    float: left;
+    margin: 28px -82px 0 49px;
+    height: 35px;
+    width: 35px;
+    display: inline-block;
+    background-image: url('../../public/icons/platform-icon.svg');
+}
+
+.arrow-blue-big {
+    display: inline-block;
+    float: right;
+    margin: 9px 10px 0 0;
+    height: 24px;
+    width: 65px;
+    background-image: url('../../public/arraw-blue-big.svg');
+}

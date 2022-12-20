@@ -1,0 +1,120 @@
+.home {
+
+    h1 {
+        margin-top: 68px;
+        width: 327px;
+        height: 67px;
+        left: calc(50% - 327px/2 - 1.02px);
+        top: 151.18px;
+        font-family: 'Termina';
+        font-style: normal;
+        font-weight: 600;
+        font-size: 51.173px;
+        line-height: 66px;
+        text-align: center;
+        color: #000000;
+    }
+
+    h2 {
+        float: right;
+        margin: 14px 17px 0 0;
+        font-family: 'Jost';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 22px;
+        text-align: center;
+        color: #000000;
+    }
+
+    .top {
+        float: left;
+        width: 187px;
+        margin-left: -10px;
+        height: 50px;
+        background-image: url('../../public/home-top-left.svg');
+        background-repeat: no-repeat;
+        background-position: left;
+        span {
+            color: #ffffff;
+            margin: 21px 0 0 43px;
+            float: left;
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 118%;
+            text-align: center;
+            color: #FFFFFF;
+        }
+    }
+
+    .receive-updates {
+        float: right;
+        margin-top: 19px;
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 118%;
+        text-align: center;
+        color: #5D80FB;
+    }
+
+    .choose-description {
+        width: 253px;
+        height: 108px;
+        font-family: "Poppins";
+        font-style: normal;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 150%;
+        color: #000000;
+        text-align: left;
+        margin: 100px 0 50px 22px;
+    }
+    button {
+        background-color: #6687FC;
+        color: white;
+        .clock-icon-white {
+            margin: 3px -80px 1px 65px;
+            float: left;
+            display: inline-block;
+            height: 22px;
+            width: 22px;
+            background-image: url('../../public/icons/clock-icon-white.png');
+        }
+    }
+
+    .contact-us-link {
+        box-sizing: border-box;
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 150%;
+        /* identical to box height, or 30px */
+        
+        text-align: center;
+        
+        color: #6687FC;
+    }
+}
+
+.bell-icon {
+    margin: -1px 10px 0 0;
+    float: left;
+    display: inline-block;
+    height: 22px;
+    width: 20px;
+    background-image: url('../../public/icons/bell-icon-blue.svg');
+}
+
+.arrow-blue-big {
+    display: inline-block;
+    float: right;
+    margin: 9px 10px 0 0;
+    height: 24px;
+    width: 65px;
+    background-image: url('../../public/arraw-blue-big.svg');
+}

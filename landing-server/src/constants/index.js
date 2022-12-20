@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MIN_RGF = exports.RGFM = exports.RGF = exports.RGF_MANUAL_CONTRACT_NAME = exports.CONTRACT_NAME = exports.DEPOLYER_CONTRACT_NAME = void 0;
+const ethers_1 = require("ethers");
+exports.DEPOLYER_CONTRACT_NAME = 'WalletLessDeployer';
+exports.CONTRACT_NAME = 'WalletLess';
+exports.RGF_MANUAL_CONTRACT_NAME = 'ManualRGFProvider';
+exports.RGF = ethers_1.BigNumber.from('1');
+exports.RGFM = ethers_1.BigNumber.from('5');
+exports.MIN_RGF = ethers_1.BigNumber.from('3096000569');

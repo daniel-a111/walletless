@@ -1,0 +1,132 @@
+.menu-signup {
+    margin: 20px auto 20px;
+    width: 129px;
+    height: 30px;
+    .item {
+        float: left;
+        box-sizing: border-box;
+        display: inline-block;
+        width: 23px;
+        height: 23px;
+        border: 3px solid #4A72FF;
+        border-radius: 23px;
+    }
+    .seperator {
+        margin-top: 10px;
+        height: 3px;
+        width: 30px;
+        background-color: #4A72FF;
+        float: left;
+    }
+}
+
+.signup-window {
+
+    h1 {
+        margin: 0 auto;
+        
+        width: 286px;
+        height: 32px;
+    
+        font-family: 'Jost';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 32px;
+        line-height: 150%;
+        /* or 48px */
+    
+        text-align: center;
+    
+        color: #000000;
+    }
+
+    .deposit-form {
+        padding: 20px 10px;
+        input[type=number] {
+            width: 100%;
+            height: 60px;
+            left: 0px;
+            top: 0px;
+            border: 1px solid #C1C1C1;
+            border-radius: 5px;
+            padding-left: 38px;
+            font-size: 31px;
+        }
+        .input-sign-dollar {
+            display: inline-block;
+            margin-top: -52px;
+            float: left;
+            z-index: 999999;
+            position: relative;
+            font-size: 32px;
+            margin-left: 13px;
+        }
+        .deposit-method-transfer {
+
+            a {
+                // position: absolute;
+                width: 168px;
+                height: 24px;
+                // left: 97px;
+                // top: 203px;
+                margin: 0 auto 20px;
+
+                font-family: 'Jost';
+                font-style: normal;
+                font-weight: 400;
+                font-size: 16px;
+                line-height: 24px;
+                /* identical to box height, or 149% */
+
+                text-align: center;
+                text-transform: uppercase;
+
+                color: #4A72FF;
+
+                img {
+                    margin-left: 10px;
+                }
+            }
+        }
+        .deposit-method {
+            display: block;
+            float: left;
+            box-sizing: border-box;
+            width: 101.65px;
+            height: 63.94px;
+            border: 0.940341px solid #4A72FF;
+            border-radius: 4.7017px;
+            img {
+                margin-top: 25px;
+            }
+            &.apple-pay {
+                float: left;
+                img {
+                    width: 46px;
+                }
+            }
+
+            &.credit-card {
+                float: none;
+                margin: 0 auto;
+                img {
+                    width: 27.5px;
+                }
+            }
+
+            &.paypal {
+                float: right;
+                img {
+                    width: 50.5px;
+                }                
+            }
+        }
+    }
+}
+
+.input-show-password {
+    float: right;
+    margin-top: -39px;
+    position: relative;
+    margin-right: 16px;
+}
