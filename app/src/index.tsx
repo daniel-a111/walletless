@@ -3,6 +3,19 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import * as storage from './storage'
+import * as walletless from './walletless'
+
+class FreezeProvider extends walletless.AbsFreezeProvider {
+  get(): walletless.WalletlessState {
+    return storage.localGetterObject(storage.WALLETLESS_FREEZE) || {};
+  }
+  set(state: walletless.WalletlessState): void {
+    storage.localSetterObject(storage.WALLETLESS_FREEZE, state);
+  }
+}
+
+walletless.init(new FreezeProvider());
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

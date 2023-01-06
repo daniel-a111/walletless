@@ -1,0 +1,113 @@
+[
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "contract Walletless",
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "initializer",
+                "type": "address"
+            }
+        ],
+        "name": "ScaaCreated",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "createAccount",
+        "outputs": [
+            {
+                "internalType": "contract Walletless",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "contract Walletless",
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "cert",
+                "type": "bytes32"
+            }
+        ],
+        "name": "createAccountAndInit",
+        "outputs": [
+            {
+                "internalType": "contract Walletless",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable[]",
+                "name": "initializers",
+                "type": "address[]"
+            },
+            {
+                "internalType": "address",
+                "name": "firstSCAA",
+                "type": "address"
+            }
+        ],
+        "name": "deployFor",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "contract Walletless",
+                "name": "wallet",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "cert",
+                "type": "bytes32"
+            }
+        ],
+        "name": "initAccount",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "contract Walletless",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "initializers_",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]

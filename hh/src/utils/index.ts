@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import ethers from 'hardhat';
 
 export const sha256 = (str: string) => {
     return crypto.createHash('sha256').update(str||'')
@@ -39,15 +40,12 @@ export const passwordToCertAndNonce = (password: string) => {
 }
 
 
-export const passwordAndAddressToCertAndNonce = (password: string, address: string) => {
+export const passwordAndAddressToCertAndNonce = (password: string, address: string, difficulty: number) => {
     let cert: any = sha256(`${password}${address}`);//.digest('hex');
-    // console.log(`${cert}`);
-    let nonceSize = 4000;
-    for (let i = 0; i < nonceSize; i++) {
+    for (let i = 0; i < difficulty; i++) {
         cert = sha256(cert.digest());//.digest('hex');
     }
     cert = '0x'+cert.digest('hex');
-    // console.log(`${cert.digest('hex')}`);
-    return { cert, nonceSize }
+    return { cert, difficulty }
 }
   

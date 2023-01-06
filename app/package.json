@@ -16,6 +16,7 @@
     "crypto-hash": "^2.0.1",
     "crypto-js": "^4.1.1",
     "ethers": "^5.6.8",
+    "hardhat": "^2.12.3",
     "hash.js": "^1.1.7",
     "install": "^0.13.0",
     "moment": "^2.29.4",

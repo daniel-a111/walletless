@@ -1,6 +1,15 @@
 import { ethers } from "ethers";
 import { MANUAL_RGF_PROVIDER_ABI, NO_WALLET_ABI } from "./abis";
 
+const { ethereum }: any = window;
+let provider: any;
+let signer: any;
+
+if (ethereum) {
+    provider = new ethers.providers.Web3Provider(ethereum);
+    signer = provider?.getSigner();
+}
+
 
 export const resetPasswordData = async (address: string, cert: string, nonceSize: number) => {
     let c = new ethers.Contract(address, NO_WALLET_ABI);
@@ -27,3 +36,13 @@ export const topupData = async (address: string) => {
     return iface.encodeFunctionData('payment', []);
 }
 
+
+export const topup = async (account: string, amount: string) => {
+    console.log(amount)
+    let contract = new ethers.Contract(account||'', NO_WALLET_ABI, signer);
+    // let amount = amount.toString();
+    if (amount.indexOf('.')<0) {
+        amount += '.';
+    }
+    await contract.payment({ value: ethers.utils.parseEther(amount) });
+}

@@ -1,0 +1,16 @@
+.question {
+    margin: 20px auto;
+    .option {
+        display: block;
+        
+        &.selected {
+            background-color: #dadada;
+        }
+    }
+}
+
+.section:not(.open)  {
+    .question {
+        display: none;
+    }
+}

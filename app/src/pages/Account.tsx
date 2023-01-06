@@ -1,64 +1,118 @@
-import { createRef, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { getAccount, getAccountAddress, getBalance, getGasFeesBalance, resetPassword, setRGFParams, setRGFProvider } from "../account/Account";
-import ResetPasswordForm from "../components/ResetPasswordForm";
-import RGFForm from "../components/RGFForm";
-import ExperimentWarning from "../components/ExperimentWarning";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { formatAddress } from "../utils";
+import * as walletless from "../walletless";
+import * as backend from "../backend";
+import DonutChart from "../components/DonutChart";
+
+const logsToActivity = (activity: any[]) => {
+    return activity;
+}
 
 const Account = () => {
     let navigate = useNavigate();
 
-    const [account, setAccount] = useState<any>();
-    const [accountAddress] = useState<string|undefined>(getAccountAddress());
-    const [gasFeesBalance, setGasFeesBalance] = useState<number>(0);
-    if (!accountAddress) {
-        setTimeout(() => {
-            navigate(`/app/signup`);
-        }, 1000);
-    }
-    const [balance, setBalance] = useState<number>(0);
     const [mount] = useState<boolean>(false);
+    const [wallet, setWallet] = useState<walletless.WalletlessState>(walletless.getState());
+    const [account, setAccount] = useState<walletless.Account>();
+    const [mainBalance, setMainBalance] = useState<walletless.Balance>();
+    const [balances, setBalances] = useState<any[]>();
+    const [history, setHistory] = useState<any[]>();
 
     useEffect(() => {
-        (async () => {
-            setAccount(await getAccount());
-            setBalance(await getBalance());
-            setGasFeesBalance(await getGasFeesBalance());
-        })();
-    }, [mount]);
+        loadAccount();
+    }, [mount, wallet]);
+
+    useEffect(() => {
+        if (account?.balances?.length) {
+            setMainBalance(account.balances[0]);
+            loadHistory();
+        }
+    }, [account]);
+
+
+    const loadAccount = async () => {
+        if (wallet.account?.address) {
+            let account = await backend.getAccount(wallet.account?.address||'');
+            setAccount(account);
+            let balances = await walletless.getBalances(wallet.account?.address||'');
+            setBalances(balances);
+        }
+    }
+
+    const loadHistory = async () => {
+        let history: any = await walletless.getHistory(wallet.account?.address||'');
+        // console.log({history});
+        setHistory(logsToActivity(history.activities));
+    }
 
     return <>
-        <ExperimentWarning />
-        <div className="app-window">
-            <Link style={{ float: 'left', display: 'inline-block', marginTop: '-24px' }} to={'/app'}>back</Link>
-            {accountAddress &&
-                <>
-                    you are connected to<br /><span style={{ fontSize: '24px', cursor: 'pointer' }}
-                        data-copy={accountAddress}
-                        onClick={copyToClipboard}>{formatAddress(accountAddress)}</span>
-                    <div style={{ marginTop: '60px' }}>
-                        Total Balance<br /><span style={{ fontSize: '28px' }}>{formatBalancePrimitive(balance)}$</span>
-                    </div>
-                    <div onClick={() => navigate(`/gas-fees`)} style={{ marginTop: '60px' }}>
-                        available gas fees: {formatBalancePrimitive(gasFeesBalance)}$
-                    </div>
-                    <RGFForm />
-                    <ResetPasswordForm />
-                    <div className="clear"></div>
-                </>
-            }
-            {
-                !accountAddress &&
-                <>
-                    <Link to={'/app/signup'}>Redirecting to Signup page</Link>
-                </>
-            }
+        {/* <ExperimentWarning /> */}
+        <div className="app-window walletless-dashboard">
+            <div>
+                <div style={{float: 'left'}}>
+                    <span>Total balance</span><br />
+                    <span>{mainBalance?.balance} {mainBalance?.coin?.symbol}</span>
+                </div>
+                <div style={{float: 'right'}}>
+                    <span>ACCOUNT</span><br />
+                    <span>{formatAddress(wallet.account?.address||'')}</span>
+                </div>
+                <div style={{clear: 'both'}}></div>
+            </div>
+            <div style={{marginTop: '60px'}}>
+                <span>Your assets</span>
+                <div style={{float: 'left'}}>
+                    { balances && <DonutChart balances={balances} /> }
+                </div>
+                <div style={{float: 'right'}}>
+                    { balances &&
+                        balances.map((balance: any) => {
+                            return <div><img src={balance.logo} />{balance.usdValue}</div>
+                        })
+                    }
+                </div>
+                <div style={{clear: 'both'}}></div>
+            </div>
+            <div>
+                <button onClick={() => navigate('/transfer')}>Send</button>
+                <button onClick={() => navigate('/recieve')}>Receive</button>
+            </div>
+            <div>
+                <span>Recent activity</span>
+                {history?.length}
+                {
+                    history &&
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {history?.map((log: any) => {
+                                return (<tr>
+                                    <td>{log.time}</td>
+                                    <td>{log.value}</td>
+                                    <td>{log.symbol}</td>
+                                    <td>{log.txHash}</td>
+                                </tr>)
+                            })}
+                        </tbody>
+                    </table>
+                }
+            </div>
+            <div>
+                <i></i>
+                <i></i>
+                <i></i>
+                <i></i>
+            </div>
         </div>
         <div className="clear"></div>
-        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
-            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
-        </div>
     </>;
 }
 export default Account;

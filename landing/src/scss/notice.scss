@@ -1,4 +1,4 @@
-.contact-us {
+.notice {
 
     p.receive-email-description {
         font-family: 'Poppins';
@@ -10,14 +10,14 @@
         color: #000000;
     }
     .bell-big-icon {
-        margin: 0 auto;
+        margin: 160px auto 0;
         display: block;
         height: 86px;
         width: 77px;
         background-image: url('../../public/icons/bell-icon-big.svg');
     }
     input[type=text] {
-
+        margin-bottom: 24px;
         padding: 10px 20px;
         gap: 24px;
 

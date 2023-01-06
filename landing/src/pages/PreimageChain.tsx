@@ -5,7 +5,7 @@ const PreimageChain = () => {
     let navigate = useNavigate();
 
     const onClickTakeSurvey = () => {
-        window.open('https://docs.google.com/forms/d/e/1FAIpQLSfbVOFWHq4UhzbqIabYL_vclHtoOgK_c-WJd1FUNLmCK5Rd_w/viewform');
+        window.open('http://bridge-to-earth.com/docs');
     }
 
     return <div className="preimage-chain">
@@ -15,6 +15,7 @@ const PreimageChain = () => {
         <div>
             <img src={process.env.PUBLIC_URL + '/preimage-chain.svg'} />
         </div>
+        <button onClick={onClickTakeSurvey}>Documentation <i className='external-icon' /></button>
     </div>;
 }
 export default PreimageChain;

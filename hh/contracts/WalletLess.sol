@@ -1,174 +1,190 @@
 pragma solidity ^0.8.9;
 
 import "./IRGFProvider.sol";
-import "./StringsHandler.sol";
 
-struct Transaction {
+
+
+struct Preset {
     address to;
     uint value;
     bytes data;
     bytes32 cert;
+    uint rgf;
+    address deliver;
 }
 
 struct AccountState {
-    uint nonce;
     bytes32 cert;
-    uint nonceSize;
-    Transaction[] pending;
-    uint8 pendingCounter;
-    uint pendingAttackCounter;
-    bool active;
-    bool txProcessing;
-    uint8 processingCursor;
+    bytes32 processing;
+    Preset[] pending;
+    uint presetCursor;
+    uint processingCursor;
     IRGFProvider rgfProvider;
 }
 
-contract WalletLess is StringsHandler {
 
-    uint nonce;
-    bytes32 cert;
-    uint nonceSize;
-    mapping(uint8 => Transaction) public pending;
-    uint pendingAttackCounter;
-    uint8 pendingCounter;
-    bool active = false;
 
-    bool txProcessing;
-    uint8 processingCursor;
+contract Walletless {
 
-    IRGFProvider rgfProvider;
+    bytes32 constant NONE = bytes32(0);
 
-    error InsufficiantRGF(uint dataLength, uint expected, uint actual);
+    bytes32 cert_;
+    bytes32 processing_;
+    mapping(uint => Preset) public presets_;
+    uint presetCursor_;
+    uint processingCursor_;
+    IRGFProvider rgfProvider_;
 
-    event RGFShouldBe(uint gasPrice, uint dataLength, uint expected, uint actual);
+    event Skip(bytes32 nonce);
+    event NoneMatches(bytes32 nonce);
+    event TxDone(bytes32 nonce, address to, uint value, bytes data);
+    event TxReverted(bytes32 nonce, address to, uint value, bytes data, string message);
+    event GasStop();
 
-    event AddPending(uint i, uint nonce, address to, uint value, bytes data, bytes32 cert);
-    event Expose(bytes32 proof, uint skip);
-    event SubmitTransaction(uint i, uint nonce, address to, uint value, bytes data);
 
-    address public initializer;
+    fallback() external payable  {
+        // require(cert_ != bytes32(0), "!!!");
+    }
+
+
+    address public immutable initializer;
     constructor() {
         initializer = msg.sender;
     }
 
-    function init(bytes32 cert_, uint nonceSize_, IRGFProvider rgfProvider_) public {
+    function init(bytes32 cert, IRGFProvider rgfProvider) public {
         require(msg.sender == initializer, "initializer only");
-        require(!active, "already active");
-        cert = cert_;
-        nonceSize = nonceSize_;
-        nonce = 0;
-        pendingCounter = 0;
-        active = true;
-        rgfProvider = rgfProvider_;
+        require(cert_ == NONE, "cannot interupt processing state");
+        cert_ = cert;
+        presetCursor_ = 0;
+        rgfProvider_ = rgfProvider;
     }
 
-    function payment() payable public {}
+
+    function getState() public view returns (AccountState memory) {
+        Preset[] memory pending_ = new Preset[](presetCursor_);
+        for (uint8 i = 0; i < presetCursor_; i++) {
+            pending_[i] = presets_[i];
+        }
+        return AccountState({
+            cert: cert_,
+            pending: pending_,
+            presetCursor: presetCursor_,
+            processing: processing_,
+            processingCursor: processingCursor_,
+            rgfProvider: rgfProvider_
+        });
+    }
+
 
     function auth(bytes32 proof, uint skip) private returns (bool) {
         bytes memory byteProof = abi.encodePacked(proof);
         for (uint i = 0; i < skip; i++) {
             byteProof = abi.encodePacked(sha256(byteProof));
         }
-        if (strEqual(sha256(byteProof), cert)) {
-            nonce++;
-            if (pendingCounter == 255) {
-                pendingAttackCounter++;
-            }
-            cert = proof;
-            txProcessing = true;
+        if (sha256(abi.encodePacked(sha256(byteProof))) == cert_) {
+            processing_ = cert_;
+            cert_ = proof;
+            return true;
         }
-        return txProcessing;
+        return false;
     }
 
-    function call(address to, uint value, bytes memory data, bytes32 cert) public payable {
-        require(!txProcessing, "cannot interupt processing state");
-        require(msg.value >= rgfProvider.get(data.length, pendingAttackCounter), "insufficiant RGF");
-        pending[pendingCounter] = Transaction({
-            to: to, value: value, data: data, cert: cert
-        });
-        emit AddPending(pendingCounter, nonce, to, value, data, cert);
-        pendingCounter++;
-    }
-
-    function getState() public view returns (AccountState memory) {
-        Transaction[] memory pending_ = new Transaction[](pendingCounter);
-        for (uint8 i = 0; i < pendingCounter; i++) {
-            pending_[i] = pending[i];
-        }
-        return AccountState({
-            nonce: nonce,
-            cert: cert,
-            nonceSize: nonceSize,
-            pending: pending_,
-            pendingAttackCounter: pendingAttackCounter,
-            pendingCounter: pendingCounter,
-            active: active,
-            txProcessing: txProcessing,
-            processingCursor: processingCursor,
-            rgfProvider: rgfProvider
-        });
-    }
 
     function verifyRecord(uint8 i, bytes32 proof) public view returns(bool) {
-        return _recordVerify(pending[i], proof);
+        return _recordVerify(presets_[i], proof);
     }
 
-    function _recordVerify(Transaction memory tr, bytes32 proof) internal pure returns(bool) {
+    function _recordVerify(Preset memory tr, bytes32 proof) internal pure returns(bool) {
         return sha256(recordToBytes(tr, proof)) == tr.cert;
     }
 
-    function recordToBytes(Transaction memory tr, bytes32 proof) internal pure returns(bytes memory) {
-        bytes memory pendingRecord = abi.encodePacked(tr.to);
-        pendingRecord = bytes.concat(pendingRecord, abi.encodePacked(tr.value));
-        pendingRecord = bytes.concat(pendingRecord, tr.data);
-        pendingRecord = bytes.concat(pendingRecord, abi.encodePacked(proof));
-        return pendingRecord;
+    function recordToBytes(Preset memory tr, bytes32 proof) internal pure returns(bytes memory) {
+        return abi.encodePacked(tr.to, tr.value, tr.data, proof);
     }
 
-    function recordToString(uint8 i, bytes32 proof) public view returns(string memory) {
-        return toString(recordToBytes(pending[i], proof));
+    function preset(address to, uint value, bytes memory data, bytes32 cert) public payable { // 5229
+        require(processing_ == NONE, "cannot interupt processing state");
+        require(msg.value >= rgfProvider_.get(data.length, presetCursor_), "insufficiant RGF");
+        presets_[presetCursor_++] = Preset({
+            to: to, value: value, data: data, cert: cert, rgf: msg.value, deliver: msg.sender
+        });
     }
 
     function expose(bytes32 proof, uint skip) external {
-        require(!txProcessing, "cannot interupt processing state");
-        uint lastPendingCounter = pendingCounter;
-        require(auth(proof, 0), "auth failed");
-        emit Expose(proof, skip);
+        require(processing_ == NONE, "cannot interupt processing state");
+        require(auth(proof, skip), "auth failed");
         exposeCont();
     }
 
     function exposeCont() public {
-        require(txProcessing, "not processing...");
-        for (uint8 i = processingCursor; i < pendingCounter; i++) {
-            if (gasleft() < 50_000+pending[i].data.length*50) {
-                processingCursor = i;
-                return;
+        require(processing_ != NONE, "not processing...");
+        _presetMatchingProcess();
+    }
+
+    function _presetMatchingProcess() internal {
+        for (uint i = processingCursor_; i < presetCursor_; i++) {
+            Preset memory tr = presets_[i];
+            if (gasleft() < 50_000+tr.data.length*50) {
+                return _gas_stop();
             }
-            Transaction memory tr = pending[i];
-            if (_recordVerify(tr, cert)) {
-                if (tr.to != address(0)) {  // for skipping
-                    emit SubmitTransaction(i, nonce, tr.to, tr.value, tr.data);
-                    pendingAttackCounter = 0;
-                    tr.to.call{value: tr.value}(bytes(tr.data));
-                }
-                break;
+            if (_recordVerify(tr, cert_)) {
+                payable(tr.deliver).transfer(tr.rgf); // 4473
+                return _finalize_found_expose(i);
+            } else {
+                payable(msg.sender).transfer(tr.rgf); // 4564
             }
         }
-        txProcessing = false;
-        pendingCounter = 0;
+        return _finalize_none_founds();
     }
 
-
-    function resetPassword(bytes32 cert_, uint nonceSize_) external {
-        require(msg.sender == address(this), "internal only");
-        cert = cert_;
-        nonceSize = nonceSize_;
-        nonce = 0;
-        pendingCounter = 0;
+    function _gas_stop() internal {
+        emit GasStop();
     }
 
-    function setRGFProvider(IRGFProvider rgfProvider_) external {
+    function _finalize_found_expose(uint cur) internal {
+        Preset memory tr = presets_[cur];
+        if (tr.to != address(0)) {  // for skipping
+            (bool success, bytes memory data) = tr.to.call{value: tr.value}(bytes(tr.data));
+            if (success) {
+                emit TxDone(processing_, tr.to, tr.value, tr.data);
+            } else {
+                emit TxReverted(processing_, tr.to, tr.value, tr.data, _getRevertMsg(data));
+            }
+        } else {
+            emit Skip(processing_);
+        }
+        _prepare_next_tx();
+    }
+
+    function _finalize_none_founds() internal {
+        emit NoneMatches(processing_);
+        _prepare_next_tx();
+    }
+
+    function _prepare_next_tx() internal {
+        processing_ = NONE;
+        presetCursor_ = 0;
+    }
+
+    function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
+        // If the _res length is less than 68, then the transaction failed silently (without a revert message)
+        if (_returnData.length < 68) return 'Transaction reverted silently';
+
+        assembly {
+            // Slice the sighash.
+            _returnData := add(_returnData, 0x04)
+        }
+        return abi.decode(_returnData, (string)); // All that remains is the revert string
+    }
+
+    function resetCert(bytes32 cert) external {
         require(msg.sender == address(this), "internal only");
-        rgfProvider = rgfProvider_;
+        cert_ = cert;
+    }
+
+    function setRGFProvider(IRGFProvider rgfProvider) external {
+        require(msg.sender == address(this), "internal only");
+        rgfProvider_ = rgfProvider;
     }
 }

@@ -6,6 +6,7 @@ import './scss/main.scss';
 import Overview from './pages/Overview';
 import PreimageChain from './pages/PreimageChain';
 import Notice from './pages/Notice';
+import Links from './pages/Links';
 
 // window.onbeforeunload = function (e) {
 //   e = e || window.event;
@@ -30,6 +31,7 @@ function App() {
             <Route path="/notice" element={<Notice />} />
             <Route path="/overview" element={<Overview />} />
             <Route path="/preimage-chain" element={<PreimageChain />} />
+            <Route path="/links" element={<Links />} />
           </Routes>   
         </div>
       </Router>

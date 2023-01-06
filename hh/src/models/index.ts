@@ -11,94 +11,52 @@ export const FeesAccount = sequelize.define("fees_account", {
     PK: {
         type: DataTypes.STRING,
     },
-    walletAddress: {
+    SCAA: {
         type: DataTypes.STRING,
         unique: true,
         allowNull: true
+    },
+    taken: {
+        type: DataTypes.BOOLEAN
+    }
+});
+
+export const SCAA = sequelize.define("SCAAs", {
+    address: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    },
+    deployTime: {
+        type: DataTypes.DATE
     }
 });
 
 
-// // export const Settings = sequelize.define("settings", {
-// //     accountCounter: DataTypes.INTEGER
-// // });
+export const SyncStatus = sequelize.define("sync_status", {
+    blockNumber: {
+        type: DataTypes.INTEGER
+    }
+});
 
-// export const Account = sequelize.define("account", {
-//     address: {
-//         type: DataTypes.STRING,
-//         primaryKey: true
-//     },
-//     balance: { 
-//         type: DataTypes.REAL,
-//         defaultValue: 0
-//     },
-//     timelock: DataTypes.INTEGER,
-//     cert: DataTypes.STRING,
-//     nonceSize: DataTypes.INTEGER,
-//     nonce: DataTypes.INTEGER,
-//     rgfProvider: DataTypes.STRING,
-//     activatedAt: DataTypes.DATE
-// });
-
-// export const Tx = sequelize.define("tx", {
-//     from: DataTypes.STRING,
-//     to: DataTypes.STRING,
-//     hash: {
-//         type: DataTypes.STRING,
-//         unique: true
-//     },
-//     value: DataTypes.REAL,
-// });
-
-// export const Gateway = sequelize.define("gateway", {
-//     from: {
-//         type: DataTypes.STRING,
-//         primaryKey: true
-//     },
-//     to: {
-//         type: DataTypes.STRING,
-//         primaryKey: true
-//     },
-//     allowance: DataTypes.REAL,
-//     approval: {
-//         type: DataTypes.REAL,
-//         defaultValue: 0
-//     },
-// });
-
-// export const PassGateway = sequelize.define("password", {
-//     address: DataTypes.STRING,
-//     certs1: DataTypes.ARRAY(DataTypes.STRING),
-//     certs2: DataTypes.ARRAY(DataTypes.STRING)
-// });
-
-// export const CoinTransferApproval = sequelize.define("transfer_approvals", {
-//     from: DataTypes.STRING,
-//     to: DataTypes.STRING,
-//     amount: DataTypes.REAL,
-//     activateAt: DataTypes.DATE,
-//     soft: DataTypes.BOOLEAN
-// });
-
-// export const PasswordPairApproval = sequelize.define("password_pairs", {
-//     address: DataTypes.STRING,
-//     cert1: DataTypes.STRING,
-//     nonce1Size: DataTypes.INTEGER,
-//     cert2: DataTypes.STRING,
-//     nonce2Size: DataTypes.INTEGER,
-//     activateAt: DataTypes.DATE,
-//     soft: DataTypes.BOOLEAN,
-//     cancel: {
-//         type: DataTypes.BOOLEAN,
-//         defaultValue: false
-//     }
-// });
-
-
-// let synced = false;
-// export const getSequelized = async () => {
-
-//     if (synced) {
-        
-//     }
-// }
+export const CoinTransfer = sequelize.define("coin_transfers", {
+    txHash: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    },
+    account: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    },
+    value: {
+        type: DataTypes.STRING
+    },
+    coinAddress: {
+        type: DataTypes.STRING,
+    },
+    symbol: {
+        type: DataTypes.STRING
+    },
+    time: {
+        type: DataTypes.DATE
+    }
+});

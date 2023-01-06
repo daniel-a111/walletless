@@ -33,7 +33,7 @@ const Notice = () => {
         window.open('https://docs.google.com/forms/d/e/1FAIpQLSfbVOFWHq4UhzbqIabYL_vclHtoOgK_c-WJd1FUNLmCK5Rd_w/viewform');
     }
 
-    return <div className="contact-us">
+    return <div className="notice">
         <Link className='back-icon' to={'/'}></Link>
         <div className='bell-big-icon'></div>
         {

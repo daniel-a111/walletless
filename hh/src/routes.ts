@@ -1,20 +1,31 @@
 import express from 'express';
-import controller from './controller'
+import * as controllers from './controllers'
 
 const router = express.Router();
-router.get('/api/reciept', controller.receipt);
-router.get('/api/tx', controller.tx);
-router.post('/api/signup', controller.signup);
-router.post('/api/init', controller.initAccount);
-router.post('/api/transact/preset', controller.transactPreset);
-router.post('/api/transact/expose', controller.expose);
-router.post('/api/transact/expose/cont', controller.exposeCont);
-router.get('/api/account', controller.getAccount);
-router.get('/api/account/RGF', controller.manualRGFProviderView);
-router.post('/api/fees-account', controller.getGasFeeAccount);
+router.get('/sync-all-scaa', controllers.provider.syncAllSCAA);
+router.get('/sync-all-data', controllers.provider.syncAllData);
 
-router.get('/api/tx/status/singup', controller.signupTxStatus);
-router.get('/api/tx/status/init', controller.initTxStatus);
-router.get('/api/gas', controller.gasMarketView);
+router.get('/api/account', controllers.network.getAccount);
+router.get('/api/account/state', controllers.network.getAccountState);
+router.post('/api/account/state', controllers.network.getAccountState);
+router.get('/api/reciept', controllers.network.receipt);
+router.get('/api/tx', controllers.network.tx);
+router.get('/api/account/RGF', controllers.network.manualRGFProviderView);
 
+router.post('/api/providers', controllers.provider.createGasFeeAccount);
+router.post('/api/fees-account/create', controllers.provider.createGasFeeAccount);
+router.post('/api/fees-account', controllers.provider.getGasFeeAccount);
+// router.post('/api/signup', controllers.provider.signup);
+router.post('/api/init', controllers.provider.initAccount);
+router.post('/api/transact/preset', controllers.provider.transactPreset);
+router.post('/api/transact/expose', controllers.provider.expose);
+router.post('/api/transact/expose/cont', controllers.provider.exposeCont);
+// router.get('/api/tx/status/singup', controllers.provider.signupTxStatus);
+router.get('/api/tx/status/init', controllers.provider.initTxStatus);
+router.get('/api/gas', controllers.provider.gasMarketView);
+
+router.get('/api/coins', controllers.provider.getCoins);
+router.get('/api/address/history', controllers.provider.history);
+
+router.get('/api/address/balances', controllers.provider.getCoins)
 export = router;

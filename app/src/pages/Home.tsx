@@ -1,131 +1,51 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { copyToClipboard, formatAddress, formatBalancePrimitive } from "../utils";
-import { clearAccount, getAccount, getBalance, getFeesAccountBalance } from "../account/Account";
-import { loadAccountAddress } from "../account/storage";
-import TransactForm from "../components/TransactForm";
-import MoreActionsMenu from "../components/MoreActionsMenu";
-import PaymentForm from "../components/PaymentForm";
-import ExperimentWarning from "../components/ExperimentWarning";
+import { useNavigate } from "react-router-dom";
+import * as walletless from '../walletless'
 
 const Home = () => {
     let navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    let clear = searchParams.get("clear");
-
-    const [symbol] = useState<string>('MATIC');
-
+    const [wallet, setWallet] = useState<walletless.WalletlessState>(walletless.getState());
     const [mount] = useState<boolean>(false);
-    const [accountAddress, setAccountAddress] = useState<string|undefined>(loadAccountAddress());
-    const [balance, setBalance] = useState<number>(0);
-    const [gasFeesBalance, setGasFeesBalance] = useState<number>(0);
 
-    const loadBalances = async () => {
-        setBalance(await getBalance());
-        setGasFeesBalance(parseFloat(await getFeesAccountBalance()));
-        setTimeout(loadBalances, 3000);
-
-        let account = await getAccount();
-        if (!account.cert) {
-            navigate('/app/signup');
-        }
+    const loadWalletless = () => {
+        setWallet(walletless.getState());
+        setTimeout(() => {
+            loadWalletless();
+        }, 300);
     }
     useEffect(() => {
-        (async () => {
-            if (clear) {
-                clearAccount();
-            }
-            setAccountAddress(loadAccountAddress());
-        })();
-        loadBalances();
+        loadWalletless();
     }, [mount]);
+    useEffect(() => {
+        if (wallet.account) {
+            if (wallet.account.cert === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+                // navigate('/app/signup/step2');
+            } else {
+                // navigate('/app/signup/manage');
+            }
+        }
+    }, [wallet])
 
-    const ACTION_PAYMENT_GATEWAY = 1;
-    const ACTION_TRANSFER = 2;
-    const ACTION_OTHER = 3;
-    const [action, setAction] = useState<number|null>();
+    const onClickCreateAccount = () => {
+        navigate('/app/signup');
+    }
 
-    const [subAction, setSubAction] = useState<number|null>();
+    const onClickLogin = () => {
+        
+    }
+
+    const onClickHowItWorks = () => {
+        
+    }
 
     return <>
-        <ExperimentWarning />
-        <div className="app-window">
-            {
-                accountAddress &&
-                <>
-                    you are connected to<br /><span style={{ fontSize: '24px', cursor: 'pointer' }}
-                        data-copy={accountAddress}
-                        onClick={copyToClipboard}>{formatAddress(accountAddress)}</span>
-                    <div style={{ marginTop: '60px' }}>
-                        Total Balance<br /><span style={{ fontSize: '28px' }}>{formatBalancePrimitive(balance)}</span>
-                        <span style={{fontSize: '12px'}}>{symbol}</span>
-                    </div>
-                    <div onClick={() => navigate(`/gas-fees`)} style={{ marginTop: '60px' }}>
-                        available gas fees: {formatBalancePrimitive(gasFeesBalance)}
-                        <span style={{fontSize: '10px'}}>{symbol}</span>
-                    </div>
-                    <div className="take-action-box">
-                        {
-                            <>
-                                {!action &&
-                                    <>
-                                        <span className="main-menu-title">What do you like to do?</span><br />
-                                        <span className="main-menu-item"
-                                            onClick={() => setAction(ACTION_PAYMENT_GATEWAY)}>create payment gateway</span>
-                                        <span className="main-menu-item"
-                                            onClick={() => setAction(ACTION_TRANSFER)}
-                                        >transfer</span>
-                                        <span
-                                            onClick={() => setAction(ACTION_OTHER)}
-                                        className="main-menu-item">more actions</span>
-                                    </>
-                                }
-                                {
-                                    action &&
-                                    <>
-                                        {
-                                            !subAction &&
-                                            <span className="left" onClick={() => setAction(null)}>back</span>
-                                        }
-                                        {
-                                            subAction &&
-                                            <span className="left" onClick={() => setSubAction(null)}>back</span>
-                                        }
-                                        <br />
-                                    </>
-                                }
-                                {
-                                    action === ACTION_TRANSFER &&
-                                    <TransactForm />
-                                }
-                                {
-                                    action === ACTION_PAYMENT_GATEWAY &&
-                                    <PaymentForm />
-                                }
-                                {
-                                    action === ACTION_OTHER &&
-                                    <MoreActionsMenu />
-                                }
-                            </>
-                        }
-                    </div>
-                </>
-            }
-            {
-                !accountAddress &&
-                <>
-                    <span
-                        onClick={() => navigate(`/app/signin`)}
-                        className="main-menu-item">Sign in account</span>
-                    <span className="main-menu-item"
-                        onClick={() => navigate(`/app/signup`)}
-                    >Create new account</span>
-                </>
-            }
-        </div>
-        <div className="clear"></div>
-        <div style={{marginTop: '40px', fontSize: '10px'}}>powered by<br />
-            <img style={{ width: '100px' }} src={process.env.PUBLIC_URL+'logo.jpeg'} />
+        <h1>Walletless</h1>
+        <h2>Decentralized & simplified</h2>
+
+        <div className="menu-home">
+            <button onClick={onClickCreateAccount} className="btn-primary">Create a account</button>
+            <button onClick={onClickLogin}>Log in</button>
+            <a onClick={onClickHowItWorks}>How does it work?</a>
         </div>
     </>;
 }

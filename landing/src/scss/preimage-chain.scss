@@ -20,5 +20,32 @@
     img {
         width: 280px;
     }
+
+    button {
+        margin-top: 60px;
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 150%;
+        text-align: center;
+        color: #0F43FB;
+        width: 349px;
+        height: 80px;
+        left: 20px;
+        top: 632px;
+        border: 2px solid #0F43FB;
+        border-radius: 8px;
+        background-color: #fff;
+    }
+
+    .external-icon {
+        margin: 4px 27px 0 -47px;
+        float: right;
+        display: inline-block;
+        height: 18px;
+        width: 19px;
+        background-image: url('../../public/icons/external-icon.svg');
+    }
     
 }

@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Wrapped Bitcoin",
+        "symbol": "WBTC",
+        "decimals": 18,
+        "price": 17000,
+        "logo": "/icons/btc.svg",
+        "address": "0xD1c214032b8AFcE61d1A3795fb7ed084D0583e01"
+    },
+    {
+        "name": "DAI",
+        "symbol": "DAI",
+        "decimals": 18,
+        "price": 1,
+        "logo": "/icons/dai.svg",
+        "address": "0x5848EAFF4DD2e713CAB6Ab4d6F5457CEA7320DD8"
+    },
+    {
+        "name": "Tether",
+        "symbol": "USDT",
+        "decimals": 18,
+        "price": 1,
+        "logo": "/icons/usdt.svg",
+        "address": "0x54fe5224D9043D8b13c2D8B4bA6B99F91B9593a4"
+    }
+]

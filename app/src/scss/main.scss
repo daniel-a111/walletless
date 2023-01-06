@@ -1,155 +1,178 @@
-body {
-    height: 100%;
-    overflow: hidden;
+
+h1 {
+    margin: 240px auto 0;
+    height: 54px;
+
+    font-family: 'Termina';
+    font-style: normal;
+    font-weight: 600;
+    font-size: 41.5824px;
+    line-height: 54px;
+    /* identical to box height, or 129% */
+
+    text-align: center;
+
+    color: #000000;
 }
 
-.app-window {
-    width: 800px;
-    margin: 0px auto;
-}
+h2 {
+    // position: absolute;
+    margin: 20px auto 0;
+    width: 239px;
+    height: 25px;
+    left: calc(50% - 239px/2 + 0.5px);
+    // top: 340px;
 
-.wallet-section {
-    background: #dadada;
-    height: 200px;
-    padding: 14px 10px;
-    border-radius: 16px;
-    border: solid 3px;
-    margin-top: 18px;
-}
-
-.take-action-box {
-    margin-top: 100px;
-}
-
-
-.account-menu-item {
-    cursor: pointer;
-    display: inline-block;
-    width: 228px;
-    background: #dadada;
-    margin: -17px 4px 40px;
-    height: 32px;
-    line-height: 32px;
-    font-size: 18px;
+    font-family: 'Jost';
+    font-style: normal;
     font-weight: 400;
-    &:hover {
-        background: #a3d1a6;
-    }
+    font-size: 21.2571px;
+    line-height: 24px;
+    /* identical to box height, or 113% */
+
+    text-align: center;
+
+    color: #000000;
 }
 
-
-.main-menu-item {
-    cursor: pointer;
-    display: inline-block;
-    width: 380px;
-    background: #dadada;
-    margin: 4px 4px;
-    height: 68px;
-    line-height: 69px;
-    font-size: 18px;
-    font-weight: 400;
-
-    &:hover {
-        background: #a3d1a6;
-    }
+.page-content { 
+    padding: 10px;
 }
-
-.gateway {
-    float: left;
-    width: 200px;
-    background: rgb(218, 218, 218);
-    padding: 36px 0px;
-    margin-right: 10px;
-    margin-top: 10px;
-
-    &:hover {
-        background: rgb(154 180 162);
-    }
-}
-
-.gateway-future {
-    margin-top: 10px;
-    float: left;
-    width: 400px;
-    background: rgb(218, 218, 218);
-    padding: 16px 0px;
-    margin-right: 10px;
-
-    &:hover {
-        background: rgb(154 180 162);
-    }
-}
-
-.gateway-control .gateway-name {
-
-    .edit-btn {
-        display: none;
-    }
-
-    &:hover {
-        .edit-btn {
-            display: block;
-        }
-    }
-}
-
-
-@media only screen and (max-width: 600px) {
-    .app-window {
-        width: 100%;
-        margin: auto;
-        padding: 0 32px;
-        box-sizing: border-box;
-    }
-    .page-content {
-        min-height: auto;
-        padding-bottom: 100px;
-    }
-    .nav .content {
-        width: 100%;
-
-        a {
-            display: none;
-        }
-        a.btn-launch-app {
-            display: inline-block;
-            margin-right: 10px;
-        }
-    }
-    .main-menu-item {
-        width: 90%;
-    }
-}
-
-tr.win td {
-    background-color: #a3d1a6;
-}
-
-.error-message {
-    background: #ecd1d1;
-    font-size: 14px;
-    padding: 7px 21px;
+.gas-credit {
+    height: 80px;
+    position: absolute;
+    bottom: 0;
+    padding: 26px;
+    box-sizing: border-box;
+    width: 100%;
     text-align: left;
-    margin: 0 0 18px;
-    border: solid 2px #d68282;
+    span {
+        font-family: 'Jost';
+        font-style: normal;
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 31px;
+        /* identical to box height, or 175% */
+        color: #000000;
+
+        &.green {
+            margin-left: 20px;
+            color: #27BE36;
+        }
+    }
 }
 
-.connect-wallet-btn {
-    display: inline-block;
-    width: 142px;
-    margin-top: 22px;
-    height: 46px;
-    font-family: "Poppins";
+input {
+    &[type=text], &[type=number], &[type=password] {
+        box-sizing: border-box;
+        
+        width: 100%;
+        height: 60px;
+        left: 0px;
+        top: 0px;
+    
+        border: 1px solid #C1C1C1;
+        border-radius: 5px;
+    }
+}
+
+button {
+    // position: absolute;
+    margin: 20px auto;
+    width: 100%;
+    height: 56px;
+    // left: 19px;
+    // top: 577px;
+
+    background: #E8E8E8;
+    border-radius: 5px;
+    border: 0;
+    font-family: 'Jost';
     font-style: normal;
     font-weight: 500;
-    font-size: 17px;
-    line-height: 44px;
+    font-size: 18px;
+    line-height: 31px;
+    /* identical to box height, or 175% */
+    margin: 0 auto 20px;
     text-align: center;
+
     color: #000000;
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAAuCAYAAAAssSu+AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFkSURBVHgB7d3NUcJQFIbh70QKoAVLsAYdl2oHDh1IBUgFQgeUEF054IISKIEOzFpmuN7rDBsHlJBvx/sskpn8rd65J1kllN3epdE29BRSX0ALSWqqpNn8LYaRQ3pJOSQBHaSkcdzcp09WJBg0FSHBpF8JMCEm2BATbIgJNsQEG2KCDTHBhphgQ0ywISbYEBNsiAk2xAQbYoINMcGGmGBDTLAhJtgQE2yICTbEBBtigg0xwYaYYENMsCEm2BATbIgJNsQEG2KCDTHBIknLnoCOQlpfhAasTOiiSaHxV+jqvY41KxNOkiMqY21QItodIya0UkbaNo+0jzqWv88RE45VRtp0UcfzoQuICf8LzTbScFlH89dlxISDyntR3o33jbR9iAn7/Hyl5YgmbW6qyu8KBOwkTTehy7YhFb08D6f5ASPhrJWRlr/UhovXWOlEUTbXD2mSl6hH8beCc7SKPNLmddTq6BvzAUqzt/oCLgAAAABJRU5ErkJggg==);
-    background-repeat: no-repeat;
-    color: #fff;
-    display: inline-block;
-    margin-bottom: 30px;
-    margin-top: -13px;
+
+    &.btn-primary {
+        background: #4A72FF;
+        color: #FFFFFF;
+
+        &:disabled {
+            background: rgba(74, 114, 255, 0.42);
+        }
+    }
+}
+.menu-home {
+    position: absolute;
+    bottom: 90px;
+
+    a {
+        // position: absolute;
+        width: 133px;
+        height: 28px;
+        // left: 128px;
+        // top: 736px;
+
+        font-family: 'Jost';
+        font-style: normal;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 27px;
+        /* identical to box height, or 170% */
+
+        text-align: center;
+
+        color: #646464;
+
+    }
+}
+
+.page-header {
+
+    
+    a.btn-back {
+        // position: absolute;
+        margin-right: -36px;
+        float: left;
+        width: 36px;
+        height: 32px;
+        // left: 22px;
+        // top: 56px;
+
+        font-family: 'Jost';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 18px;
+        line-height: 31px;
+        /* identical to box height, or 175% */
+
+
+        color: #4A72FF;
+    }
+
+    span {
+        // position: absolute;
+        display: inline-block;
+        margin: 6px auto 10px;
+        width: 133px;
+        height: 28px;
+        // left: 129px;
+        // top: 58px;
+    
+        font-family: 'Jost';
+        font-style: normal;
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 27px;
+        /* identical to box height, or 136% */
+    
+        text-align: center;
+    
+        color: #000000;
+    }
 }
