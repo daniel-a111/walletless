@@ -11,25 +11,29 @@ import Receive from './pages/Receive';
 import ReceiveSign from './pages/ReceiveSign';
 import TestPassword from './pages/TestPassword';
 import SetPassword from './pages/SetPassword';
+import Nav from './components/Nav';
+import Login from './pages/Login';
 
 function App() {
   return (
     <div className="App">
       <Router>
         <div className='page-content'>
+          <Nav />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/app/manage" element={<Account />} />
             <Route path="/app/signup/step1" element={<signup.Step1 />} />
             <Route path="/app/signup/step2" element={<signup.Step2 />} />
             <Route path="/app/signup/step3" element={<signup.Step3 />} />
+            <Route path="/app/login" element={<Login />} />
             <Route path="/app/" element={<Home />} />
             <Route path="/recieve" element={<Receive />} />
             <Route path="/recieve/sign" element={<ReceiveSign />} />
             <Route path="/transfer" element={<Transfer />} />
             <Route path="/transfer/sign" element={<Sign />} />
             <Route path="/test-password" element={<TestPassword />} />
-            <Route path="/set-password" element={<SetPassword />} />
+            <Route path="/reset-password" element={<SetPassword />} />
           </Routes>   
         </div>
       </Router>

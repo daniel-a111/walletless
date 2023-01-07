@@ -11,7 +11,9 @@ export function preImageChain(a: string, size: number) {
 
 export function authPreImageChain(password: string, chain: string, difficulty: number): boolean {
     if (!chain) throw "image must be string";
+    
     let hash: any = sha256(`${hexStringToByteArray(password)}`);
+    console.log(hash);
     for (let i = 0; i < difficulty; i++) {
         hash = sha256(hash);
         if (hash === chain) {

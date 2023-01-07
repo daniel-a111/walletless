@@ -5,6 +5,7 @@ const router = express.Router();
 router.get('/sync-all-scaa', controllers.provider.syncAllSCAA);
 router.get('/sync-all-data', controllers.provider.syncAllData);
 
+router.post('/api/auth/login', controllers.provider.login);
 router.get('/api/account', controllers.network.getAccount);
 router.get('/api/account/state', controllers.network.getAccountState);
 router.post('/api/account/state', controllers.network.getAccountState);

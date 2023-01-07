@@ -8,9 +8,12 @@ import { Tx } from "./network/types";
 import * as backend from "../backend";
 import { sha256 } from "ethers/lib/utils";
 import { ethers } from "ethers";
+import { stat } from "fs";
 
+export * as crypto from './crypto';
 export * as provider from './gas/provider'
 export * as types from "./types";
+export * as abis from "./abis";
 
 export const NULL_CERT = '0x0000000000000000000000000000000000000000000000000000000000000000';
 export interface Coin {
@@ -59,6 +62,30 @@ export interface PipelineState {
 export abstract class AbsFreezeProvider {
     abstract get(): WalletlessState;
     abstract set(state: WalletlessState): void;
+}
+
+export const login = async (address: string, pass: string, difficulty: number, difficultyUnit: number) => {
+    console.log({
+        account: address, pass, difficulty, difficultyUnit
+    });
+    let scaa: SCAA = await backend.getAccountState(address);
+    let it = difficultyTimeToIterations(difficulty, difficultyUnit);
+    console.log({it});
+    let access = crypto.preImageAccess(address, pass, scaa.cert, it);
+    console.log({access});
+    let {account, gasProvider} = await provider.passwordLogin(address, access?.proofProof||'');
+    console.log({account});
+
+    state.deploy = undefined;
+    state.init = undefined;
+    state.address = undefined;
+    state.account = account;
+    state.gasProvider = gasProvider;
+    freeze();
+    
+    // console.log(it);
+    // console.log(account+pass, wallet?.account?.cert||'', it);
+
 }
 
 const onDeployDone = (account: SCAA) => {
@@ -118,6 +145,10 @@ export async function init(freezeProvider?: AbsFreezeProvider) {
     if (state.account) {
         
     }
+}
+
+const loginSCAA = (address: string, key: string) => {
+
 }
 
 function freeze() {
@@ -188,10 +219,15 @@ export async function deploySCAA(): Promise<pipeline.DeploySCAA> {
 
 
 const DIF_PER_SECOND = 10_000_000/15;
+
+export function difficultyTimeToIterations(difficulty: number, difficultyUnit:number) {
+    return Math.floor(difficulty*difficultyUnit/1000*DIF_PER_SECOND);
+} 
+
 export async function initSCAA(address: string, password: string,
     difficulty: number, difficultyUnit:number, feesAddress: string, key: string): Promise<pipeline.InitSCAA> {
     if (state.gasProvider) {
-        difficulty = Math.floor(difficulty*difficultyUnit/1000*DIF_PER_SECOND);
+        difficulty = difficultyTimeToIterations(difficulty, difficultyUnit);
         let cert = crypto.preImageChain(address+password, difficulty);
         state.init = await provider.init(address, cert, feesAddress, key);
 
@@ -272,6 +308,15 @@ export async function transact(tx: types.TxAuthentication): Promise<string> {
     return "";
 }
 
+export async function testPassword(tx: types.TxAuthentication): Promise<boolean> {
+    let account: types.AccountState = await network.accountState(tx.transaction.from);
+    if (account.cert) {
+        const difficulty = Math.floor(tx.difficulty*tx.difficultyUnit/1000*DIF_PER_SECOND);
+        let certAccess = crypto.preImageAccess(tx.transaction.from, tx.password, account.cert, difficulty);
+        return !!certAccess;
+    }
+    return false;
+}
 
 export async function continueExpose(tx: types.TxAuthentication): Promise<any> {
     // try {

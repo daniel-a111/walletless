@@ -42,12 +42,10 @@ const Account = () => {
 
     const loadHistory = async () => {
         let history: any = await walletless.getHistory(wallet.account?.address||'');
-        // console.log({history});
         setHistory(logsToActivity(history.activities));
     }
 
     return <>
-        {/* <ExperimentWarning /> */}
         <div className="app-window walletless-dashboard">
             <div>
                 <div style={{float: 'left'}}>

@@ -27,11 +27,12 @@ const Home = () => {
     }, [wallet])
 
     const onClickCreateAccount = () => {
-        navigate('/app/signup');
+        navigate('/app/signup/step1');
     }
 
     const onClickLogin = () => {
-        
+
+        navigate('/app/manage');
     }
 
     const onClickHowItWorks = () => {

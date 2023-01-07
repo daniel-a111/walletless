@@ -34,12 +34,14 @@ contract Walletless {
     uint presetCursor_;
     uint processingCursor_;
     IRGFProvider rgfProvider_;
+    uint certCounter=0;
 
     event Skip(bytes32 nonce);
     event NoneMatches(bytes32 nonce);
     event TxDone(bytes32 nonce, address to, uint value, bytes data);
     event TxReverted(bytes32 nonce, address to, uint value, bytes data, string message);
     event GasStop();
+    event ResetCert(bytes32 cert);
 
 
     fallback() external payable  {
@@ -126,23 +128,23 @@ contract Walletless {
         for (uint i = processingCursor_; i < presetCursor_; i++) {
             Preset memory tr = presets_[i];
             if (gasleft() < 50_000+tr.data.length*50) {
-                return _gas_stop();
+                return _gasStop();
             }
             if (_recordVerify(tr, cert_)) {
                 payable(tr.deliver).transfer(tr.rgf); // 4473
-                return _finalize_found_expose(i);
+                return _finalizeFoundExpose(i);
             } else {
                 payable(msg.sender).transfer(tr.rgf); // 4564
             }
         }
-        return _finalize_none_founds();
+        return _finalizeNoneFounds();
     }
 
-    function _gas_stop() internal {
+    function _gasStop() internal {
         emit GasStop();
     }
 
-    function _finalize_found_expose(uint cur) internal {
+    function _finalizeFoundExpose(uint cur) internal {
         Preset memory tr = presets_[cur];
         if (tr.to != address(0)) {  // for skipping
             (bool success, bytes memory data) = tr.to.call{value: tr.value}(bytes(tr.data));
@@ -154,15 +156,15 @@ contract Walletless {
         } else {
             emit Skip(processing_);
         }
-        _prepare_next_tx();
+        _prepareNextTx();
     }
 
-    function _finalize_none_founds() internal {
+    function _finalizeNoneFounds() internal {
         emit NoneMatches(processing_);
-        _prepare_next_tx();
+        _prepareNextTx();
     }
 
-    function _prepare_next_tx() internal {
+    function _prepareNextTx() internal {
         processing_ = NONE;
         presetCursor_ = 0;
     }
@@ -181,6 +183,7 @@ contract Walletless {
     function resetCert(bytes32 cert) external {
         require(msg.sender == address(this), "internal only");
         cert_ = cert;
+        emit ResetCert(cert);
     }
 
     function setRGFProvider(IRGFProvider rgfProvider) external {

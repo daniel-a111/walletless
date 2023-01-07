@@ -23,7 +23,7 @@ export const receipt = async (req: Request, res: Response, next: NextFunction) =
 }
 
 
-const loadAccount = async (address: string, rgfDetailed: boolean=false) => {
+export const loadAccount = async (address: string, rgfDetailed: boolean=false) => {
 
     const [owner, addr1, addr2, addr3] = await ethers.getSigners();
     const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
@@ -90,6 +90,7 @@ export const getAccountState = async (req: Request, res: Response, next: NextFun
     }
     try {
         const TwoFactorWallet = await ethers.getContractFactory(CONTRACT_NAME);
+        console.log(address);
         const wallet = TwoFactorWallet.attach(address);
         return res.status(200).json({ account: await loadAccount(wallet.address) })    
     } catch(e: any) {

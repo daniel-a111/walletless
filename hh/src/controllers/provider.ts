@@ -7,15 +7,44 @@ import { CONTRACT_NAME, DEPOLYER_CONTRACT_NAME, RGF_MANUAL_CONTRACT_NAME } from 
 import { CoinTransfer, FeesAccount, SCAA, sequelize, SyncStatus } from '../models';
 import { sha256 } from '../utils';
 import { Op } from 'sequelize';
-import axios from 'axios';
-import { provider } from '.';
-
+import { loadAccount } from './network';
 
 const EMPTY_CERT = '0x0000000000000000000000000000000000000000000000000000000000000000';
 export const DEPLOYER_ADDRESS = fs.readFileSync('./deployments/localhost.txt').toString(); // localhost
 const coins: any[] = JSON.parse(fs.readFileSync("./coins.json").toString());
 const WalletlessDeployerABI: any[] = JSON.parse(fs.readFileSync("./abis/WalletlessDeployer.json").toString());
 const WalletlessABI: any[] = JSON.parse(fs.readFileSync("./abis/Walletless.json").toString());
+
+export const login = async (req: Request, res: Response) => {
+    let {address: account, pp}: any = req.body;
+
+    const [owner] = await ethers.getSigners();
+    const provider = owner.provider;
+    let wallet = await loadWallet(account);
+    const state = await wallet.getState();
+    console.log(state.cert);
+    console.log({pp});
+    console.log(ethers.utils.sha256('0x'+pp));
+    if (ethers.utils.sha256('0x'+pp) === state.cert) {
+        let feesAccount: any = await FeesAccount.findOne({ where: { SCAA: account } });
+        let key = ethers.utils.sha256(feesAccount.PK||'0x');
+        let balance = '0.0';
+        if (provider) {
+            balance = ethers.utils.formatEther(await provider.getBalance(feesAccount.address));
+        }
+        return res.status(200).json({
+            gasProvider: {
+                SCAA: feesAccount.SCAA,
+                address: feesAccount.address,
+                balance,
+                key
+            }, account: await loadAccount(account)
+        });
+    }
+    return res.status(401).json({
+        message: 'authentication failed'
+    })
+}
 
 export const getCoins = async (req: Request, res: Response, next: NextFunction) => {
     const [owner] = await ethers.getSigners();
@@ -292,7 +321,7 @@ export const getGasFeeAccount = async (req: Request, res: Response, next: NextFu
     let { address, key } = req.body;
     const feesAccount: any = await FeesAccount.findByPk(address);
     if (feesAccount) {
-        if (sha256(feesAccount.PK).digest('hex') === key) {
+        if (ethers.utils.sha256(feesAccount.PK) === key) {
             return res.status(200).json({ provider:  {
                 address, key, balance: await balanceOf(address), SCAA: feesAccount.SCAA
             }});
@@ -309,64 +338,10 @@ export const getGasFeeAccount = async (req: Request, res: Response, next: NextFu
     return res.status(400).json({ message: 'unauthorized'})
 }
 
-
-
-// export const signup = async (req: Request, res: Response, next: NextFunction) => {
-//     let { feesAddress, key, gasLimit }: any = req.body;
-//     gasLimit = gasLimit||3_500_000;
-//     try {
-//         throw new Error("Currently not in use");
-//         let feesAccount = await signinFeesAccount(feesAddress, key);
-//         let tx = await deploy(feesAccount.PK, { gasLimit, ...gasConfiguration() });
-//         let status = 'pending';
-//         if (tx.status === 1) {
-//             status = 'done';
-//         } else if (tx.status === 2) {
-//             status = 'failed';
-//         }
-//         return res.status(200).json({ tx: { hash: tx.hash, status } });
-//     } catch(e: any) {
-//         return res.status(500).json({ error: e?.message||JSON.stringify(e)});
-//     }
-// }
-
-
-
-// const generateNewWallet = async () => {
-//     const [owner] = await ethers.getSigners();
-//     let addressData = ethWallet.generate();
-//     let address = addressData.getAddressString();
-//     let PK = addressData.getPrivateKeyString();
-//     let key = sha256(PK).digest('hex');
-
-//     let gasLimit = 1_500_000;
-//     await owner.sendTransaction({
-//         to: address, value: ethers.utils.parseEther("8")
-//     });
-//     let tx = await deployFor(address, { gasLimit, ...gasConfiguration() });
-//     let receipt = await tx.wait();
-//     let [{ args: {account: SCAA} }] = receipt.events;
-//     await FeesAccount.build({ address, PK, SCAA }).save();
-
-//     const params = {
-//         from: owner.address,
-//         to: '0xaca8de99d892f7872e28572730bbeb4112a37f7b',
-//         value: ethers.utils.parseUnits('8', 'ether').toHexString()
-//     };
-
-//     // SCAA = params.to;
-
-//     await owner.sendTransaction({
-//         to: SCAA, value: ethers.utils.parseEther("2"), gasLimit
-//     });
-//     return {address, PK, key, SCAA}
-// }
-
 const balanceOf = async (address: string): Promise<string> => {
     const [owner] = await ethers.getSigners();
     return ethers.utils.formatEther(await owner.provider?.getBalance(address)||'0')
 }
-
 
 interface SignupBody {
     address: string;
@@ -383,39 +358,6 @@ const ethProvider = async () => {
     const [owner] = await ethers.getSigners();
     return owner.provider;
 }
-
-
-// const deploy = async (PK: string, { gasLimit, maxFeePerGas, maxPriorityFeePerGas }: any) => {
-//     let addr = new ethers.Wallet(PK, await ethProvider()); // TODO wrap in function
-//     const Depolyer = await ethers.getContractFactory(DEPOLYER_CONTRACT_NAME);
-//     const deployer = Depolyer.attach(DEPLOYER_ADDRESS);    
-//     console.log({ gasLimit, maxFeePerGas, maxPriorityFeePerGas });
-//     console.log({adderss: addr.address})
-//     return await deployer.connect(addr).createAccount({ gasLimit, maxFeePerGas, maxPriorityFeePerGas });
-// }
-
-// const gasConfiguration = () => {
-//     let maxFeePerGas, maxPriorityFeePerGas;
-//     maxFeePerGas = maxPriorityFeePerGas = getMaxFeePerGas();
-//     return {maxFeePerGas, maxPriorityFeePerGas};
-// }
-
-const signinFeesAccount = async (address: string, key: string) => {
-    const feesAccount: any = await FeesAccount.findByPk(address);
-    if (feesAccount) {
-        if (sha256(feesAccount.PK).digest('hex') === key) {
-            return feesAccount;
-        } else if( feesAccount.walletAddress ) {
-            let wallet = await loadWallet(feesAccount.walletAddress);
-            let { cert } = await wallet.getState();
-            if (sha256(key).digest('hex') === cert) {
-                return feesAccount;
-            }
-        }
-    }
-    throw 'key authentication failed';
-}
-
 
 export const initAccount = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -449,6 +391,7 @@ export const initAccount = async (req: Request, res: Response, next: NextFunctio
 
 const loadWallet = async (address: string) => {
     const SCAA = await ethers.getContractFactory(CONTRACT_NAME);
+    console.log({address});
     return SCAA.attach(address);
 }
 
@@ -513,12 +456,6 @@ export const transactPreset = async (req: Request, res: Response, next: NextFunc
     });
     console.log({b: ethers.utils.formatEther(await rgfProvider.get((data.length-2)/2, 0))})
     let transaction = await wallet.connect(addr).preset(to, value, data, txCert, { value: fees });
-    // let transaction = await wallet.connect(addr).preset(to, value, data, txCert, { value: fees, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
-    // if (a) {
-    //     return res.status(200).json({
-    //         notYet: true, transaction
-    //     });
-    // }
     return res.status(200).json({ transaction });
 }
 
