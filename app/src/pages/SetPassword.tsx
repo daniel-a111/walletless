@@ -83,22 +83,13 @@ const SetPassword = () => {
         <div className="app-window signup-window">
             <div className="page-header">
                 <a className="btn-back">Back</a>
-                <span>Create account</span>
-            </div>
-            <div className="menu-signup">
-                <span className="item">1</span>
-                <div className="seperator"></div>
-                <span className="item">2</span>
-                <div className="seperator"></div>
-                <span className="item">3</span>
+                <span>settings</span>
             </div>
             <div style={{marginTop: '40px'}}>
                 <img style={{marginLeft: '14px'}} src={process.env.PUBLIC_URL+'/icons/gas-station.svg'} />
             </div>
             <div>
-                <h1>Create password</h1>
-                <p>This password contains decentaralised encryption and cannot be recovered.</p>
-                <a><img src={process.env.PUBLIC_URL+'/icons/more-info.svg'} /></a>
+                <h1>Reset password</h1>
             </div>
             <div className="enter-password-form">
                 {

@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "npx tsc",
-    "dev": "npx nodemon ./index.ts"
+    "dev": "npx nodemon --ignore oracle.json ./index.ts"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",

@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import { createRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as walletless from "../walletless";
+var QRCode = require('qrcode');
 
 const coins = [{
     symbol: 'BTC',
@@ -34,6 +35,7 @@ const coins = [{
     usdValue: '30k'
 }]
 
+
 const Receive = () => {
     let navigate = useNavigate();
 
@@ -42,6 +44,16 @@ const Receive = () => {
     const toRef = createRef<HTMLInputElement>();
     const amountRef = createRef<HTMLInputElement>();
     const coinRef = createRef<HTMLSelectElement>();
+    const canvasRef = createRef<HTMLCanvasElement>();
+    
+    setTimeout(() => {
+        var canvas = canvasRef.current;
+        console.log(canvas);
+        QRCode.toCanvas(canvas, walletless.getState().account?.address, function (error: any) {
+            if (error) console.error(error)
+                console.log('success!');
+        });            
+    }, 100);
 
     // const loadGasFees = async () => {
     //     let wallet = walletless.getState()
@@ -73,6 +85,9 @@ const Receive = () => {
 
     return <>
         <div>
+            <div>
+                <canvas ref={canvasRef} />
+            </div>
             <label>Recieptent
                 <input ref={toRef} type={'text'} value={walletless.getState().account?.address} />
             </label>

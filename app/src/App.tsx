@@ -4,7 +4,6 @@ import Home from './pages/Home';
 import './scss/main.scss';
 import signup from './components/signup';
 import Account from './pages/Account';
-import GasCredit from './components/GasCredit';
 import Transfer from './pages/Transfer';
 import Sign from './pages/transact/Sign';
 import Receive from './pages/Receive';
@@ -13,6 +12,9 @@ import TestPassword from './pages/TestPassword';
 import SetPassword from './pages/SetPassword';
 import Nav from './components/Nav';
 import Login from './pages/Login';
+import Footer from './components/Footer';
+import Activities from './pages/Activities';
+import Pending from './pages/Pending';
 
 function App() {
   return (
@@ -34,10 +36,12 @@ function App() {
             <Route path="/transfer/sign" element={<Sign />} />
             <Route path="/test-password" element={<TestPassword />} />
             <Route path="/reset-password" element={<SetPassword />} />
+            <Route path="/activities" element={<Activities />} />
+            <Route path="/pending" element={<Pending />} />
           </Routes>   
         </div>
       </Router>
-      <GasCredit />
+      <Footer />
     </div>
   );
 }

@@ -2,8 +2,6 @@ pragma solidity ^0.8.9;
 
 import "./IRGFProvider.sol";
 
-
-
 struct Preset {
     address to;
     uint value;
@@ -23,7 +21,6 @@ struct AccountState {
 }
 
 
-
 contract Walletless {
 
     bytes32 constant NONE = bytes32(0);
@@ -41,13 +38,10 @@ contract Walletless {
     event TxDone(bytes32 nonce, address to, uint value, bytes data);
     event TxReverted(bytes32 nonce, address to, uint value, bytes data, string message);
     event GasStop();
-    event ResetCert(bytes32 cert);
-
+    event ResetCert(uint certCounter, bytes32 indexed oldCert, bytes32 indexed newCert);
 
     fallback() external payable  {
-        // require(cert_ != bytes32(0), "!!!");
     }
-
 
     address public immutable initializer;
     constructor() {
@@ -60,8 +54,8 @@ contract Walletless {
         cert_ = cert;
         presetCursor_ = 0;
         rgfProvider_ = rgfProvider;
+        emit ResetCert(0, cert_, cert);
     }
-
 
     function getState() public view returns (AccountState memory) {
         Preset[] memory pending_ = new Preset[](presetCursor_);
@@ -78,7 +72,6 @@ contract Walletless {
         });
     }
 
-
     function auth(bytes32 proof, uint skip) private returns (bool) {
         bytes memory byteProof = abi.encodePacked(proof);
         for (uint i = 0; i < skip; i++) {
@@ -91,7 +84,6 @@ contract Walletless {
         }
         return false;
     }
-
 
     function verifyRecord(uint8 i, bytes32 proof) public view returns(bool) {
         return _recordVerify(presets_[i], proof);
@@ -182,8 +174,8 @@ contract Walletless {
 
     function resetCert(bytes32 cert) external {
         require(msg.sender == address(this), "internal only");
+        emit ResetCert(certCounter++, cert_, cert);
         cert_ = cert;
-        emit ResetCert(cert);
     }
 
     function setRGFProvider(IRGFProvider rgfProvider) external {

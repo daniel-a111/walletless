@@ -13,7 +13,7 @@ const Account = () => {
     let navigate = useNavigate();
 
     const [mount] = useState<boolean>(false);
-    const [wallet, setWallet] = useState<walletless.WalletlessState>(walletless.getState());
+    const [wallet] = useState<walletless.WalletlessState>(walletless.getState());
     const [account, setAccount] = useState<walletless.Account>();
     const [mainBalance, setMainBalance] = useState<walletless.Balance>();
     const [balances, setBalances] = useState<any[]>();
@@ -45,6 +45,10 @@ const Account = () => {
         setHistory(logsToActivity(history.activities));
     }
 
+    const coinSymbolToLogo = (symbol: string) => {
+        return balances?.find((c: any) => c.symbol === symbol)?.logo;
+    }
+
     return <>
         <div className="app-window walletless-dashboard">
             <div>
@@ -66,7 +70,7 @@ const Account = () => {
                 <div style={{float: 'right'}}>
                     { balances &&
                         balances.map((balance: any) => {
-                            return <div><img src={balance.logo} />{balance.usdValue}</div>
+                            return <div><img src={balance.logo} />{balance.balance}</div>
                         })
                     }
                 </div>
@@ -76,15 +80,13 @@ const Account = () => {
                 <button onClick={() => navigate('/transfer')}>Send</button>
                 <button onClick={() => navigate('/recieve')}>Receive</button>
             </div>
-            <div>
-                <span>Recent activity</span>
-                {history?.length}
+            <div style={{'height': '200px', overflow: 'scroll'}}>
                 {
                     history &&
                     <table>
                         <thead>
                             <tr>
-                                <th></th>
+                                {/* <th></th> */}
                                 <th></th>
                                 <th></th>
                                 <th></th>
@@ -93,21 +95,16 @@ const Account = () => {
                         <tbody>
                             {history?.map((log: any) => {
                                 return (<tr>
-                                    <td>{log.time}</td>
+                                    {/* <td>{log.time}</td> */}
                                     <td>{log.value}</td>
-                                    <td>{log.symbol}</td>
-                                    <td>{log.txHash}</td>
+                                    <td><img src={coinSymbolToLogo(log.symbol)} /></td>
+                                    {/* <td>{log.symbol}</td> */}
+                                    <td>{formatAddress(log.txHash)}</td>
                                 </tr>)
                             })}
                         </tbody>
                     </table>
                 }
-            </div>
-            <div>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
             </div>
         </div>
         <div className="clear"></div>

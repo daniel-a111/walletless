@@ -2,8 +2,6 @@ import express from 'express';
 import * as controllers from './controllers'
 
 const router = express.Router();
-router.get('/sync-all-scaa', controllers.provider.syncAllSCAA);
-router.get('/sync-all-data', controllers.provider.syncAllData);
 
 router.post('/api/auth/login', controllers.provider.login);
 router.get('/api/account', controllers.network.getAccount);
@@ -27,6 +25,7 @@ router.get('/api/gas', controllers.provider.gasMarketView);
 
 router.get('/api/coins', controllers.provider.getCoins);
 router.get('/api/address/history', controllers.provider.history);
+router.get('/api/address/activities', controllers.provider.activities);
 
 router.get('/api/address/balances', controllers.provider.getCoins)
 export = router;

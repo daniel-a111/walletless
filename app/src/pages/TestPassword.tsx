@@ -1,6 +1,7 @@
 import { createRef, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import * as walletless from "../walletless";
+var QRCode = require('qrcode');
 
 const TestPassword = () => {
 
@@ -15,12 +16,15 @@ const TestPassword = () => {
     const [activatePending, setActivatePending] = useState<any>();
     const [isTesting, setTesting] = useState<boolean>(false);
     const [isPassed, setPassed] = useState<boolean>(false);
+    const [proofProof, setProofProof] = useState<string|undefined>();
 
     const [mount] = useState<boolean>(false);
     const [wallet, setWallet] = useState<walletless.WalletlessState>(walletless.getState());
     const passwordRef = createRef<HTMLInputElement>();
     const difficultyRef = createRef<HTMLInputElement>();
     const difficultyUnitRef = createRef<HTMLSelectElement>();
+    const canvasRef = createRef<HTMLCanvasElement>();
+
 
     useEffect(() => {
         if (wallet) {
@@ -33,7 +37,7 @@ const TestPassword = () => {
     }, [wallet]);
 
     const onClickSignTransaction = async () => {
-        let passed = await walletless.testPassword({
+        let access = await walletless.testPassword({
             transaction: {
                 from: wallet?.account?.address || '',
                 to: '',
@@ -45,7 +49,16 @@ const TestPassword = () => {
             difficultyUnit: parseInt(difficultyUnitRef.current?.value||'0')
         });
         setTesting(true);
-        setPassed(passed);
+        setPassed(!!access?.proofProof);
+        setProofProof(access?.proofProof);
+        if (access?.proofProof) {
+            var canvas = canvasRef.current;
+            console.log(canvas);
+            QRCode.toCanvas(canvas, access?.proofProof, function (error: any) {
+                if (error) console.error(error)
+                    console.log('success!');
+            });
+        }
     };
 
     const onClickContinueExpose = () => {
@@ -64,6 +77,7 @@ const TestPassword = () => {
                             isPassed &&
                             <>
                                 PASSED!
+                                <canvas ref={canvasRef}></canvas>
                             </>
                         }
                         {

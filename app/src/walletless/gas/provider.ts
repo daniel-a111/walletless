@@ -56,17 +56,6 @@ export const login = (address: string, key: string): FeesAccount => {
     feesAccout = new FeesAccount(address, key);
     return feesAccout;
 }
-type HttpMethod = 'get' | 'post';
-const httpCall = async (method: HttpMethod, url: string, options: any) => {
-    const res = await axios[method](url, options);
-    return res.data
-}
-const httpCallPost = async (uri: string, body?: any) => {
-    return await httpCall('post', `${API_BASE_URL}${uri}`, body);
-}
-const httpCallGet = async (uri: string, query?: any) => {
-    return await httpCall('get', `${API_BASE_URL}${uri}`, { params: query });
-}
 export const passwordLogin = async (address: string, pp: string) => {
     return await httpCallPost('/auth/login', { address, pp });
 }
@@ -157,4 +146,23 @@ export const listBalances = async (address: string): Promise<any[]> => {
 
 export const history = async (address: string): Promise<any[]> => {
     return await httpCallGet('/address/history', { address });
+}
+
+
+export const activities = async (address: string): Promise<any[]> => {
+    return await httpCallGet('/address/activities', { address });
+}
+
+
+
+type HttpMethod = 'get' | 'post';
+const httpCall = async (method: HttpMethod, url: string, options: any) => {
+    const res = await axios[method](url, options);
+    return res.data
+}
+const httpCallPost = async (uri: string, body?: any) => {
+    return await httpCall('post', `${API_BASE_URL}${uri}`, body);
+}
+const httpCallGet = async (uri: string, query?: any) => {
+    return await httpCall('get', `${API_BASE_URL}${uri}`, { params: query });
 }

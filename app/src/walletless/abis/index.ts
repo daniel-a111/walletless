@@ -1,5 +1,10 @@
 import {utils} from 'ethers';
 
+
+export const ERC20Iface = new utils.Interface([
+
+]);
+
 export const walletlessIface = new utils.Interface([
 
     "event Skip(bytes32 nonce)",

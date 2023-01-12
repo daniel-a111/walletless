@@ -9,6 +9,7 @@ import * as backend from "../backend";
 import { sha256 } from "ethers/lib/utils";
 import { ethers } from "ethers";
 import { stat } from "fs";
+import { PreImageAccess } from "./crypto/types";
 
 export * as crypto from './crypto';
 export * as provider from './gas/provider'
@@ -40,6 +41,7 @@ export interface SCAA {
     feesAccount: string;
     isActive: boolean;
     nonce: number;
+    pending: any[];
     pendingAttackCounter: number;
     pendingCounter: number;
     processingCursor: number;
@@ -251,7 +253,7 @@ export async function getAccount(): Promise<types.GasFeesProvider> {
     throw 'error while creating gas provider';    
 }
 
-const normalizeDataArgs = (arg: string): string => {
+export const normalizeDataArgs = (arg: string): string => {
     if (arg.startsWith('0x')) {
         arg = arg.substring(2);
     }
@@ -267,7 +269,7 @@ const toBytes32 = (hex: string): string => {
     return '0x'+hex;
 }
 
-const toNormalized32 = (hex: string): string => {
+export const toNormalized32 = (hex: string): string => {
     return normalizeDataArgs(toBytes32(hex));
 }
 export async function transact(tx: types.TxAuthentication): Promise<string> {
@@ -308,14 +310,13 @@ export async function transact(tx: types.TxAuthentication): Promise<string> {
     return "";
 }
 
-export async function testPassword(tx: types.TxAuthentication): Promise<boolean> {
+export async function testPassword(tx: types.TxAuthentication): Promise<PreImageAccess|undefined> {
     let account: types.AccountState = await network.accountState(tx.transaction.from);
     if (account.cert) {
         const difficulty = Math.floor(tx.difficulty*tx.difficultyUnit/1000*DIF_PER_SECOND);
         let certAccess = crypto.preImageAccess(tx.transaction.from, tx.password, account.cert, difficulty);
-        return !!certAccess;
+        return certAccess;
     }
-    return false;
 }
 
 export async function continueExpose(tx: types.TxAuthentication): Promise<any> {
@@ -383,5 +384,9 @@ export const getBalances = async (address: string) => {
 
 export const getHistory = async (address: string) => {
     return await provider.history(address);
+}
+
+export const getActivities = async (address: string) => {
+    return await provider.activities(address);
 }
 

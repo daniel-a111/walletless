@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import * as walletless from '../walletless'
+import GasCredit from "./GasCredit";
 
-const Nav = () => {
+const Footer = () => {
 
     const [mount, setMount] = useState<boolean>(false);
     const [gasCredit, setGasCredit] = useState<string>("0.0");
@@ -18,12 +19,8 @@ const Nav = () => {
         loadGasFees();        
     }, [mount]);
 
-    return <div className="nav">
-        <Link to={'/app/manage'}>main</Link><br />
-        <Link to={'/test-password'}>test password</Link><br />
-        <Link to={'/reset-password'}>reset password</Link><br />
-        <Link to={'/activities'}>activities</Link><br />
-        <Link to={'/pending'}>pending</Link><br />
+    return <div className="footer">
+        <GasCredit />
     </div>;
 }
-export default Nav;
+export default Footer;
